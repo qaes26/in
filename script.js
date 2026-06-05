@@ -1,0 +1,2806 @@
+>     <script>
+          tailwind.config = {
+              darkMode: 'class',
+              theme: {
+                  extend: {
+                      colors: {
+                          primary: {
+                              50: '#eef2ff',
+                              100: '#e0e7ff',
+                              200: '#c7d2fe',
+                              300: '#a5b4fc',
+                              400: '#818cf8',
+                              500: '#6366f1',
+                              600: '#4f46e5',
+                              700: '#4338ca',
+                              800: '#3730a3',
+                              900: '#312e81',
+                          },
+                          secondary: '#0f172a',
+                          accent: {
+                              light: '#a78bfa',
+                              DEFAULT: '#8b5cf6',
+                              dark: '#7c3aed'
+                          },
+                          darkbg: '#080c14',
+                          darkcard: '#111827',
+                          darkborder: '#1f2937'
+                      },
+                      fontFamily: {
+                          arabic: ['"Cairo"', '"Tajawal"', 'sans-serif'],
+                          english: ['"Outfit"', 'sans-serif']
+                      },
+                      animation: {
+                          'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                          'spin-slow': 'spin 8s linear infinite',
+                      }
+                  }
+              }
+          }
+      </script>
+      
+      <style>
+          body {
+              font-family: 'Cairo', 'Tajawal', sans-serif;
+              transition: background-color 0.3s ease, color 0.3s ease;
+              -webkit-tap-highlight-color: transparent;
+          }
+          
+          html[lang="en"] body {
+              font-family: 'Outfit', sans-serif;
+          }
+  
+          /* Custom Scrollbar */
+          ::-webkit-scrollbar {
+              width: 8px;
+              height: 8px;
+          }
+          ::-webkit-scrollbar-track {
+              background: rgba(0, 0, 0, 0.05);
+              border-radius: 10px;
+          }
+          .dark ::-webkit-scrollbar-track {
+              background: rgba(255, 255, 255, 0.02);
+          }
+          ::-webkit-scrollbar-thumb {
+              background: #c7d2fe;
+              border-radius: 10px;
+              border: 2px solid transparent;
+              background-clip: padding-box;
+          }
+          .dark ::-webkit-scrollbar-thumb {
+              background: #374151;
+              border: 2px solid transparent;
+              background-clip: padding-box;
+          }
+          ::-webkit-scrollbar-thumb:hover {
+              background: #818cf8;
+              border: 2px solid transparent;
+              background-clip: padding-box;
+          }
+  
+          /* Smooth page fades */
+          .fade-in {
+              animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
+          @keyframes fadeIn {
+              from { opacity: 0; transform: translateY(8px); }
+              to { opacity: 1; transform: translateY(0); }
+          }
+  
+          /* 3D Flashcard Flip */
+          .perspective-1000 {
+              perspective: 1000px;
+          }
+          .flip-card-inner {
+              position: relative;
+              width: 100%;
+              height: 100%;
+              text-align: center;
+              transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+              transform-style: preserve-3d;
+              -webkit-transform-style: preserve-3d;
+          }
+          .flip-card.flipped .flip-card-inner {
+              transform: rotateY(180deg);
+              -webkit-transform: rotateY(180deg);
+          }
+          .flip-card-front, .flip-card-back {
+              position: absolute;
+              width: 100%;
+              height: 100%;
+              backface-visibility: hidden;
+              -webkit-backface-visibility: hidden;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border-radius: 1.5rem;
+          }
+          .flip-card-back {
+              transform: rotateY(180deg);
+              -webkit-transform: rotateY(180deg);
+          }
+  
+          /* Touch drag scrolling for Mindmap */
+          .grab-scroll {
+              cursor: grab;
+              user-select: none;
+          }
+          .grab-scroll:active {
+              cursor: grabbing;
+          }
+  
+          /* Safe Area Padding for Mobile Bottom Bar */
+          .pb-safe {
+              padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 76px);
+          }
+          @media (min-width: 768px) {
+              .pb-safe {
+                  padding-bottom: 2rem;
+              }
+          }
+  
+          /* Confetti Animation */
+          .confetti {
+              position: absolute;
+              width: 10px;
+              height: 10px;
+              border-radius: 50%;
+              animation: fall 3s ease-out infinite;
+              pointer-events: none;
+              z-index: 100;
+          }
+          @keyframes fall {
+              0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+              100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
+          }
+  
+          /* Glassmorphism utility */
+          .glass-panel {
+              background: rgba(255, 255, 255, 0.7);
+              backdrop-filter: blur(12px);
+              -webkit-backdrop-filter: blur(12px);
+              border: 1px solid rgba(255, 255, 255, 0.4);
+          }
+          .dark .glass-panel {
+              background: rgba(17, 24, 39, 0.7);
+              backdrop-filter: blur(12px);
+              -webkit-backdrop-filter: blur(12px);
+              border: 1px solid rgba(255, 255, 255, 0.05);
+          }
+  
+          /* Custom options styling */
+          .option-card {
+              transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          }
+          .option-card:hover {
+              transform: translateY(-2px);
+          }
+      </style>
+  </head>
+  <body class="bg-indigo-50/30 text-slate-800 dark:bg-darkbg dark:text-gray-200 min-h-screen flex flex-col md:flex-row overflow-x-hidden transition-all duration-300">
+  
+      <!-- Confetti Container -->
+      <div id="confetti-container" class="fixed inset-0 pointer-events-none z-50 overflow-hidden"></div>
+  
+      <!-- Mobile Top Navigation Header -->
+      <header class="md:hidden glass-panel text-slate-800 dark:text-white px-4 py-3 flex justify-between items-center sticky top-0 z-40 shadow-sm border-b dark:border-gray-800/80">
+          <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 bg-primary-600 text-white rounded-xl flex items-center justify-center shadow-md shadow-primary-500/20">
+                  <i class="fas fa-university text-sm"></i>
+              </div>
+              <div>
+                  <h1 class="font-bold text-sm leading-tight text-slate-900 dark:text-white" data-i18n="portal_title">بوابة الحكومة الإلكترونية</h1>
+                  <p class="text-[9px] text-gray-500 dark:text-gray-400 font-medium" data-i18n="course_name">مساق الحكومة الإلكترونية</p>
+              </div>
+          </div>
+          <div class="flex items-center gap-1.5">
+              <button onclick="toggleTheme()" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-gray-800/80 flex items-center justify-center text-slate-600 dark:text-yellow-400 transition-colors border dark:border-gray-700/50">
+                  <i class="fas fa-moon dark:hidden"></i>
+                  <i class="fas fa-sun hidden dark:inline"></i>
+              </button>
+              <button onclick="toggleLanguage()" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-gray-800/80 flex items-center justify-center font-bold text-xs text-primary-600 dark:text-primary-400 transition-colors border dark:border-gray-700/50">
+                  <span class="lang-en hidden">عربي</span>
+                  <span class="lang-ar">EN</span>
+              </button>
+          </div>
+      </header>
+  
+      <!-- Desktop Sidebar Navigation -->
+      <aside id="sidebar" class="hidden md:flex bg-white/80 dark:bg-darkcard/90 backdrop-blur-md w-72 h-screen sticky top-0 overflow-y-auto shadow-xl flex-col duration-300 rtl:border-l ltr:border-r border-gray-100 dark:border-gray-800 z-40">
+          <!-- Sidebar Header with Profile -->
+          <div class="p-6 text-center border-b border-gray-100 dark:border-gray-800/60 relative overflow-hidden">
+              <div class="absolute -top-20 -right-20 w-44 h-44 bg-primary-100/40 dark:bg-primary-950/15 rounded-full filter blur-xl"></div>
+              <div class="absolute -bottom-20 -left-20 w-44 h-44 bg-accent/5 dark:bg-accent/5 rounded-full filter blur-xl"></div>
+              
+              <div class="relative z-10 flex flex-col items-center">
+                  <div class="w-20 h-20 bg-gradient-to-tr from-primary-600 to-accent text-white rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-primary-500/30 transform hover:scale-105 transition-transform duration-300">
+                      <i class="fas fa-graduation-cap text-4xl"></i>
+                  </div>
+                  <h1 class="text-lg font-black tracking-wide text-slate-900 dark:text-white" data-i18n="course_name">مساق الحكومة الإلكترونية</h1>
+                  <p class="text-xs text-primary-600 dark:text-primary-400 font-semibold bg-primary-50 dark:bg-primary-950/45 px-3 py-1 rounded-full mt-2.5" data-i18n="instructor">د. فالح الحوري</p>
+              </div>
+          </div>
+          
+          <!-- Controls (Theme & Lang) -->
+          <div class="px-4 py-3 flex gap-2 border-b border-gray-50 dark:border-gray-800/40">
+              <button onclick="toggleTheme()" class="flex-1 py-2.5 rounded-xl bg-slate-50 dark:bg-gray-800/60 hover:bg-indigo-50 dark:hover:bg-gray-800 text-slate-700 dark:text-gray-200 transition-all border border-gray-100 dark:border-gray-800 flex justify-center items-center gap-2 text-sm font-semibold shadow-sm" title="Toggle Theme">
+                  <i class="fas fa-moon dark:hidden text-primary-500"></i>
+                  <i class="fas fa-sun hidden dark:inline text-yellow-400"></i>
+                  <span class="dark:hidden" data-i18n="dark_mode">وضع مظلم</span>
+                  <span class="hidden dark:inline" data-i18n="light_mode">وضع مضيء</span>
+              </button>
+              <button onclick="toggleLanguage()" class="flex-1 py-2.5 rounded-xl bg-slate-50 dark:bg-gray-800/60 hover:bg-indigo-50 dark:hover:bg-gray-800 text-slate-700 dark:text-gray-200 transition-all font-bold border border-gray-100 dark:border-gray-800 flex justify-center items-center gap-2 text-sm shadow-sm" title="Toggle Language">
+                  <i class="fas fa-globe text-primary-500"></i>
+                  <span class="lang-en hidden">العربية</span>
+                  <span class="lang-ar">English</span>
+              </button>
+          </div>
+  
+          <!-- Sidebar Navigation Menu -->
+          <nav class="flex-1 px-4 py-6 space-y-1.5">
+              <p class="text-[10px] uppercase text-gray-400 dark:text-gray-500 font-black mb-3 px-2 tracking-wider" data-i18n="main_menu">القائمة الرئيسية</p>
+              
+              <a href="#" onclick="loadView('dashboard')" class="nav-item flex items-center p-3 rounded-xl hover:bg-primary-50 dark:hover:bg-gray-850/80 text-gray-700 dark:text-gray-300 font-semibold transition-all duration-200" id="nav-dashboard-desktop">
+                  <i class="fas fa-chart-line w-6 text-center text-lg rtl:ml-2.5 ltr:mr-2.5"></i> 
+                  <span data-i18n="dashboard">لوحة التحكم</span>
+              </a>
+              
+              <a href="#" onclick="loadView('chapters')" class="nav-item flex items-center p-3 rounded-xl hover:bg-primary-50 dark:hover:bg-gray-850/80 text-gray-700 dark:text-gray-300 font-semibold transition-all duration-200" id="nav-chapters-desktop">
+                  <i class="fas fa-book-open w-6 text-center text-lg rtl:ml-2.5 ltr:mr-2.5"></i> 
+                  <span data-i18n="study_materials">المادة الدراسية</span>
+              </a>
+              
+              <a href="#" onclick="loadView('mindmap')" class="nav-item flex items-center p-3 rounded-xl hover:bg-primary-50 dark:hover:bg-gray-850/80 text-gray-700 dark:text-gray-300 font-semibold transition-all duration-200" id="nav-mindmap-desktop">
+                  <i class="fas fa-project-diagram w-6 text-center text-lg rtl:ml-2.5 ltr:mr-2.5"></i> 
+                  <span data-i18n="mind_map">الخريطة الذهنية</span>
+              </a>
+              
+              <p class="text-[10px] uppercase text-gray-400 dark:text-gray-500 font-black mt-6 mb-3 px-2 tracking-wider" data-i18n="practice_menu">التدريب والمراجعة</p>
+              
+              <a href="#" onclick="loadView('flashcards')" class="nav-item flex items-center p-3 rounded-xl hover:bg-primary-50 dark:hover:bg-gray-850/80 text-gray-700 dark:text-gray-300 font-semibold transition-all duration-200" id="nav-flashcards-desktop">
+                  <i class="fas fa-layer-group w-6 text-center text-lg rtl:ml-2.5 ltr:mr-2.5"></i> 
+                  <span data-i18n="flashcards">البطاقات التعليمية</span>
+              </a>
+              
+              <a href="#" onclick="loadView('quizzes')" class="nav-item flex items-center p-3 rounded-xl hover:bg-primary-50 dark:hover:bg-gray-850/80 text-gray-700 dark:text-gray-300 font-semibold transition-all duration-200" id="nav-quizzes-desktop">
+                  <i class="fas fa-tasks w-6 text-center text-lg rtl:ml-2.5 ltr:mr-2.5"></i> 
+                  <span data-i18n="question_bank">بنك الأسئلة</span>
+              </a>
+              
+              <a href="#" onclick="loadView('exam')" class="nav-item flex items-center p-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 dark:text-red-400 font-bold transition-all duration-200 mt-4 border border-transparent hover:border-red-100 dark:hover:border-red-900/30" id="nav-exam-desktop">
+                  <i class="fas fa-file-signature w-6 text-center text-lg rtl:ml-2.5 ltr:mr-2.5"></i> 
+                  <span data-i18n="final_exam">الامتحان النهائي</span>
+              </a>
+          </nav>
+          
+          <!-- Sidebar Footer -->
+          <div class="p-4 text-center text-[10px] text-gray-400 dark:text-gray-500 bg-slate-55/40 dark:bg-transparent border-t border-gray-100 dark:border-gray-800/60 font-semibold">
+              <span>إعداد قيس جازي</span>
+          </div>
+      </aside>
+  
+      <!-- Main Content Area -->
+      <main class="flex-1 p-4 md:p-8 w-full transition-all duration-300 pb-safe md:pb-8 flex flex-col items-center" id="main-content">
+          <!-- Top Search Bar Container -->
+          <div class="mb-6 relative w-full max-w-3xl z-30">
+              <div class="relative drop-shadow-sm hover:drop-shadow-md transition-shadow">
+                  <input type="text" id="searchInput" onkeyup="handleSearch()" class="w-full pl-12 pr-12 py-3.5 md:py-4 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-darkcard text-slate-800 dark:text-gray-100 shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-accent transition-all text-sm md:text-base font-medium" placeholder="ابحث في المقرر... / Search...">
+                  <i class="fas fa-search absolute rtl:left-4.5 ltr:right-4.5 top-4.5 md:top-5 text-gray-400"></i>
+                  <i class="fas fa-book-open absolute rtl:right-4.5 ltr:left-4.5 top-4.5 md:top-5 text-primary-500 dark:text-accent"></i>
+              </div>
+              
+              <!-- Search Results Dropdown -->
+              <div id="searchResults" class="absolute w-full mt-2.5 bg-white dark:bg-darkcard rounded-2xl shadow-2xl hidden max-h-72 overflow-y-auto border border-gray-100 dark:border-gray-800/80 z-50 divide-y divide-gray-50 dark:divide-gray-800"></div>
+          </div>
+  
+          <!-- Dynamic Content Injector -->
+          <div id="content-container" class="fade-in w-full max-w-5xl">
+              <!-- Dynamic components injected here -->
+          </div>
+      </main>
+  
+      <!-- Mobile Bottom Navigation Bar -->
+      <nav class="md:hidden fixed bottom-0 left-0 right-0 glass-panel border-t border-gray-200/80 dark:border-gray-800/80 flex justify-around items-center px-2 py-1.5 z-40 shadow-[0_-8px_30px_rgb(0,0,0,0.06)] pb-safe-area">
+          <button onclick="loadView('dashboard')" class="nav-item-mobile flex flex-col items-center justify-center p-2 w-15 text-gray-400 dark:text-gray-500 hover:text-primary-600 transition-colors" id="nav-dashboard-mobile">
+              <i class="fas fa-home text-lg mb-0.5"></i>
+              <span class="text-[9px] font-bold" data-i18n="nav_home">الرئيسية</span>
+          </button>
+          <button onclick="loadView('chapters')" class="nav-item-mobile flex flex-col items-center justify-center p-2 w-15 text-gray-400 dark:text-gray-500 hover:text-primary-600 transition-colors" id="nav-chapters-mobile">
+              <i class="fas fa-book-open text-lg mb-0.5"></i>
+              <span class="text-[9px] font-bold" data-i18n="nav_study">الدراسة</span>
+          </button>
+          <button onclick="loadView('mindmap')" class="nav-item-mobile flex flex-col items-center justify-center p-2 w-16 relative -top-3.5" id="nav-mindmap-mobile">
+              <div class="w-13 h-13 rounded-full bg-gradient-to-tr from-primary-600 to-accent text-white flex items-center justify-center shadow-lg shadow-primary-500/35 border-4 border-slate-50 dark:border-darkbg transform hover:scale-105 active:scale-95 transition-transform">
+                  <i class="fas fa-project-diagram text-lg"></i>
+              </div>
+              <span class="text-[9px] font-bold mt-1 text-primary-600 dark:text-accent" data-i18n="nav_mindmap">الخريطة</span>
+          </button>
+          <button onclick="loadView('flashcards')" class="nav-item-mobile flex flex-col items-center justify-center p-2 w-15 text-gray-400 dark:text-gray-500 hover:text-primary-600 transition-colors" id="nav-flashcards-mobile">
+              <i class="fas fa-layer-group text-lg mb-0.5"></i>
+              <span class="text-[9px] font-bold" data-i18n="nav_cards">البطاقات</span>
+          </button>
+          <button onclick="loadView('quizzes')" class="nav-item-mobile flex flex-col items-center justify-center p-2 w-15 text-gray-400 dark:text-gray-500 hover:text-primary-600 transition-colors" id="nav-quizzes-mobile">
+              <i class="fas fa-tasks text-lg mb-0.5"></i>
+              <span class="text-[9px] font-bold" data-i18n="nav_quiz">اختبار</span>
+          </button>
+      </nav>
+  
+      <!-- Floating POMODORO Timer Widget (Optimized for Mobile/Desktop drag & touch) -->
+      <div id="timer-widget" class="fixed z-40 bg-white/90 backdrop-blur-md dark:bg-darkcard/90 shadow-2xl rounded-2xl px-3.5 py-2.5 flex items-center gap-3 border border-gray-100 dark:border-gray-800 bottom-24 md:bottom-6 right-4 md:right-8 transition-all hover:border-primary-400 dark:hover:border-accent">
+          <button id="toggleTimer" onclick="toggleStudyTimer()" class="w-8 h-8 rounded-xl bg-primary-50 dark:bg-primary-950/40 flex items-center justify-center text-primary-600 dark:text-primary-400 hover:bg-primary-100 transition-colors">
+              <i class="fas fa-play text-xs" id="timerIcon"></i>
+          </button>
+          <div class="flex flex-col">
+              <span id="timerDisplay" class="font-mono text-base font-bold tracking-wider text-slate-800 dark:text-white leading-none">00:00</span>
+              <span id="timerTypeDisplay" class="text-[8px] text-gray-400 font-bold uppercase mt-0.5">Study Mode</span>
+          </div>
+          <div class="flex gap-1">
+              <button onclick="switchTimerMode()" class="text-gray-400 hover:text-primary-500 p-1" title="Switch Mode (Timer / Pomodoro)">
+                  <i class="fas fa-hourglass-half text-[11px]"></i>
+              </button>
+              <button onclick="resetStudyTimer()" class="text-gray-400 hover:text-red-500 p-1" title="Reset Timer">
+                  <i class="fas fa-rotate-left text-[11px]"></i>
+              </button>
+          </div>
+      </div>
+  
+      <!-- Extra styles for safe areas -->
+      <style>
+          .pb-safe-area { 
+              padding-bottom: calc(env(safe-area-inset-bottom, 10px) + 0.5rem); 
+          }
+      </style>
+  
+>     <script>
+          // --- 1. COURSE DATA ---
+          const courseData = [
+              {
+                  id: 1,
+                  ar: {
+                      title: "الفصل الأول: مدخل إلى الحكومة الإلكترونية",
+                      overview: "مقدمة حول مفهوم الحكومة الإلكترونية والفرق بينها وبين الحكومة الرقمية والذكية، والنظرة الحديثة لها.",
+                      content: `
+                          <div class="space-y-6">
+                              <section class="bg-indigo-50/20 dark:bg-slate-900/30 p-5 rounded-2xl border border-indigo-100/50 dark:border-slate-800/50">
+                                  <h3 class='text-lg md:text-xl font-bold mb-3 text-primary-600 dark:text-accent flex items-center gap-2'>
+                                      <i class="fas fa-bookmark text-sm"></i> مفهوم الحكومة الإلكترونية
+                                  </h3>
+                                  <p class='text-slate-700 dark:text-gray-300 leading-relaxed text-sm md:text-base'>استخدام الحكومات لتكنولوجيا الاتصالات والمعلومات المبتكرة وتحديداً تطبيقات الإنترنت من أجل توفير وصول أكثر سهولة وملائمة للمواطنين والأعمال إلى الخدمات والمعلومات، بهدف تحسين الجودة وتوفير فرص المشاركة الديمقراطية.</p>
+                              </section>
+                              <section class="p-5 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                  <h3 class='text-lg md:text-xl font-bold mb-3 text-primary-600 dark:text-accent flex items-center gap-2'>
+                                      <i class="fas fa-brain text-sm"></i> مفهوم الحكومة الرقمية والذكية
+                                  </h3>
+                                  <p class='text-slate-700 dark:text-gray-300 leading-relaxed text-sm md:text-base'>مرحلة أكثر تقدمًا، تعتمد على التحول الرقمي والذكي الشامل للعمليات الحكومية باستخدام البيانات الضخمة (Big Data) والتقنيات الذكية (AI) لتحسين صنع القرار وتقديم خدمات بصورة مستمرة واستباقية.</p>
+                              </section>
+                              <section class="p-5 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                  <h3 class='text-lg md:text-xl font-bold mb-4 text-primary-600 dark:text-accent flex items-center gap-2'>
+                                      <i class="fas fa-eye text-sm"></i> النظرة الحديثة للحكومة الإلكترونية
+                                  </h3>
+                                  <ul class='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                                      <li class="flex items-start bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800"><i class="fas fa-check-circle text-emerald-500 mt-1 rtl:ml-2.5 ltr:mr-2.5"></i><span class="text-sm">مصدر للمعلومات والمعرفة.</span></li>
+                                      <li class="flex items-start bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800"><i class="fas fa-check-circle text-emerald-500 mt-1 rtl:ml-2.5 ltr:mr-2.5"></i><span class="text-sm">تؤمن بالعمل الجماعي والتعاون بدلاً من الفردية.</span></li>
+                                      <li class="flex items-start bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800 sm:col-span-2"><i class="fas fa-check-circle text-emerald-500 mt-1 rtl:ml-2.5 ltr:mr-2.5"></i><span class="text-sm">نظام واحد متكامل تتفاعل عناصره لإنجاز الأعمال عبر "نافذة واحدة" (One Stop Shop).</span></li>
+                                      <li class="flex items-start bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800 sm:col-span-2"><i class="fas fa-check-circle text-emerald-500 mt-1 rtl:ml-2.5 ltr:mr-2.5"></i><span class="text-sm">ليست مجرد موقع إلكتروني جميل، بل أداة تواصل وتفاعل وتبادل معرفة.</span></li>
+                                  </ul>
+                              </section>
+                          </div>
+                      `,
+                      keyTerms: ["الحكومة الإلكترونية", "الحكومة الذكية", "النافذة الواحدة (One Stop Shop)"],
+                      notes: "الحكومة الإلكترونية ليست مجرد حوسبة للإجراءات، بل هي إعادة هندسة كاملة للعمل الحكومي."
+                  },
+                  en: {
+                      title: "Chapter 1: Introduction to E-Government",
+                      overview: "Introduction to the concept of E-Government, differences from Digital and Smart Government, and modern perspectives.",
+                      content: `
+                          <div class="space-y-6">
+                              <section class="bg-indigo-50/20 dark:bg-slate-900/30 p-5 rounded-2xl border border-indigo-100/50 dark:border-slate-800/50">
+                                  <h3 class='text-lg md:text-xl font-bold mb-3 text-primary-600 dark:text-accent flex items-center gap-2'>
+                                      <i class="fas fa-bookmark text-sm"></i> Concept of E-Government
+                                  </h3>
+                                  <p class='text-slate-700 dark:text-gray-300 leading-relaxed text-sm md:text-base'>Governments' use of innovative ICTs, specifically web applications, to provide citizens and businesses with easier and more convenient access to government information and services.</p>
+                              </section>
+                              <section class="p-5 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                  <h3 class='text-lg md:text-xl font-bold mb-3 text-primary-600 dark:text-accent flex items-center gap-2'>
+                                      <i class="fas fa-brain text-sm"></i> Digital and Smart Government Concept
+                                  </h3>
+                                  <p class='text-slate-700 dark:text-gray-300 leading-relaxed text-sm md:text-base'>A more advanced stage relying on comprehensive digital and smart transformation using Big Data and AI to improve decision-making and provide continuous, proactive services.</p>
+                              </section>
+                              <section class="p-5 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                  <h3 class='text-lg md:text-xl font-bold mb-4 text-primary-600 dark:text-accent flex items-center gap-2'>
+                                      <i class="fas fa-eye text-sm"></i> Modern Perspective
+                                  </h3>
+                                  <ul class='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                                      <li class="flex items-start bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800"><i class="fas fa-check-circle text-emerald-500 mt-1 mr-2"></i><span class="text-sm">A source of information and knowledge.</span></li>
+                                      <li class="flex items-start bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800"><i class="fas fa-check-circle text-emerald-500 mt-1 mr-2"></i><span class="text-sm">Believes in teamwork and cooperation.</span></li>
+                                      <li class="flex items-start bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800 sm:col-span-2"><i class="fas fa-check-circle text-emerald-500 mt-1 mr-2"></i><span class="text-sm">An integrated system interacting via a "One Stop Shop".</span></li>
+                                  </ul>
+                              </section>
+                          </div>
+                      `,
+                      keyTerms: ["E-Government", "Smart Government", "One Stop Shop"],
+                      notes: "E-Government is not merely computerizing procedures; it is a complete reengineering of government work."
+                  }
+              },
+              {
+                  id: 2,
+                  ar: {
+                      title: "الفصل الثاني: الأهداف، الخصائص، والآثار",
+                      overview: "يناقش هذا الفصل أهداف تطبيق الحكومة الإلكترونية وخصائصها والآثار الداخلية والخارجية المترتبة عليها.",
+                      content: `
+                          <div class="space-y-6">
+                              <section>
+                                  <h3 class='text-lg md:text-xl font-bold mb-3 text-primary-600 dark:text-accent'><i class="fas fa-bullseye text-sm"></i> الأهداف</h3>
+                                  <div class='grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6'>
+                                      <div class="bg-indigo-50/20 dark:bg-slate-900/40 p-4 rounded-xl border border-indigo-100/50 dark:border-slate-800/60 shadow-sm flex items-center gap-3">
+                                          <div class="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0"><i class="fas fa-hands-helping"></i></div>
+                                          <span class="text-sm font-semibold">تسهيل الخدمات الحكومية</span>
+                                      </div>
+                                      <div class="bg-indigo-50/20 dark:bg-slate-900/40 p-4 rounded-xl border border-indigo-100/50 dark:border-slate-800/60 shadow-sm flex items-center gap-3">
+                                          <div class="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0"><i class="fas fa-hourglass-end"></i></div>
+                                          <span class="text-sm font-semibold">تقليل البيروقراطية والوقت</span>
+                                      </div>
+                                      <div class="bg-indigo-50/20 dark:bg-slate-900/40 p-4 rounded-xl border border-indigo-100/50 dark:border-slate-800/60 shadow-sm flex items-center gap-3">
+                                          <div class="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0"><i class="fas fa-search-dollar"></i></div>
+                                          <span class="text-sm font-semibold">زيادة الشفافية وخفض التكلفة</span>
+                                      </div>
+                                  </div>
+                              </section>
+  
+                              <section>
+                                  <h3 class='text-lg md:text-xl font-bold mb-3 text-primary-600 dark:text-accent'><i class="fas fa-sliders-h text-sm"></i> الخصائص</h3>
+                                  <ul class='grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6'>
+                                      <li class="bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800 flex items-center gap-2.5"><i class="fas fa-network-wired text-indigo-500"></i><span class="text-sm font-medium">تكامل الأنظمة الحكومية المختلفة.</span></li>
+                                      <li class="bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800 flex items-center gap-2.5"><i class="fas fa-chart-line text-indigo-500"></i><span class="text-sm font-medium">الاعتماد على البيانات والتحليلات.</span></li>
+                                      <li class="bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800 flex items-center gap-2.5"><i class="fas fa-bezier-curve text-indigo-500"></i><span class="text-sm font-medium">إعادة تصميم العمليات رقميًا.</span></li>
+                                      <li class="bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800 flex items-center gap-2.5"><i class="fas fa-magic text-indigo-500"></i><span class="text-sm font-medium">خدمات استباقية موجهة للمواطن.</span></li>
+                                  </ul>
+                              </section>
+  
+                              <section>
+                                  <h3 class='text-lg md:text-xl font-bold mb-3 text-primary-600 dark:text-accent'><i class="fas fa-project-diagram text-sm"></i> آثار التطبيق</h3>
+                                  <div class='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
+                                      <div class='bg-blue-50/40 dark:bg-blue-950/10 p-5 rounded-2xl border border-blue-100/50 dark:border-blue-900/30 shadow-sm'>
+                                          <h4 class='font-bold text-blue-700 dark:text-blue-400 mb-3 flex items-center gap-2'><i class="fas fa-building text-base"></i>الآثار الداخلية</h4>
+                                          <ul class='space-y-2.5 text-xs md:text-sm font-medium text-slate-600 dark:text-gray-300'>
+                                              <li class="flex items-center gap-2"><i class="fas fa-check text-blue-500 text-xs"></i> تجنب التكرار وخفض الكلفة</li>
+                                              <li class="flex items-center gap-2"><i class="fas fa-check text-blue-500 text-xs"></i> تبسيط الإجراءات وكفاءة أكبر</li>
+                                              <li class="flex items-center gap-2"><i class="fas fa-check text-blue-500 text-xs"></i> تعزيز الشفافية بين الدوائر</li>
+                                              <li class="flex items-center gap-2"><i class="fas fa-check text-blue-500 text-xs"></i> أمن وحوكمة إدارة المعلومات</li>
+                                          </ul>
+                                      </div>
+                                      <div class='bg-emerald-50/40 dark:bg-emerald-950/10 p-5 rounded-2xl border border-emerald-100/50 dark:border-emerald-900/30 shadow-sm'>
+                                          <h4 class='font-bold text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2'><i class="fas fa-users text-base"></i>الآثار الخارجية</h4>
+                                          <ul class='space-y-2.5 text-xs md:text-sm font-medium text-slate-600 dark:text-gray-300'>
+                                              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> السرعة في توفير الخدمة</li>
+                                              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> زيادة المرونة والابتكار في الخدمات</li>
+                                              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> مشاركة وتمكين أعظم للمواطن</li>
+                                          </ul>
+                                      </div>
+                                  </div>
+                              </section>
+                          </div>
+                      `,
+                      keyTerms: ["البيروقراطية", "الخدمات الاستباقية", "الشفافية"],
+                      notes: "الفرق الجوهري يكمن في الانتقال من التركيز على 'المعاملة' إلى التركيز على 'رضا المواطن'."
+                  },
+                  en: {
+                      title: "Chapter 2: Objectives, Characteristics & Impacts",
+                      overview: "Discusses the objectives of implementing E-Government, its characteristics, and impacts.",
+                      content: `
+                          <div class="space-y-6">
+                              <section>
+                                  <h3 class='text-lg md:text-xl font-bold mb-3 text-primary-600 dark:text-accent'><i class="fas fa-bullseye text-sm"></i> Objectives</h3>
+                                  <ul class='grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6'>
+                                      <li class="bg-indigo-50/20 dark:bg-slate-900/40 p-4 rounded-xl border border-indigo-100/50 dark:border-slate-800/60 shadow-sm flex items-center gap-2.5 text-sm font-semibold"><i class="fas fa-hands-helping text-indigo-500"></i> Facilitate access to services</li>
+                                      <li class="bg-indigo-50/20 dark:bg-slate-900/40 p-4 rounded-xl border border-indigo-100/50 dark:border-slate-800/60 shadow-sm flex items-center gap-2.5 text-sm font-semibold"><i class="fas fa-hourglass-end text-indigo-500"></i> Reduce bureaucracy & time</li>
+                                      <li class="bg-indigo-50/20 dark:bg-slate-900/40 p-4 rounded-xl border border-indigo-100/50 dark:border-slate-800/60 shadow-sm flex items-center gap-2.5 text-sm font-semibold"><i class="fas fa-search-dollar text-indigo-500"></i> Increase transparency & efficiency</li>
+                                  </ul>
+                              </section>
+                              <section>
+                                  <h3 class='text-lg md:text-xl font-bold mb-3 text-primary-600 dark:text-accent'><i class="fas fa-project-diagram text-sm"></i> Impacts</h3>
+                                  <div class='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
+                                      <div class='bg-blue-50/40 dark:bg-blue-950/10 p-5 rounded-2xl border border-blue-100/50 dark:border-blue-900/30'>
+                                          <h4 class='font-bold text-blue-700 dark:text-blue-400 mb-2'>Internal Impacts</h4>
+                                          <ul class='list-disc list-inside text-sm mt-2 text-slate-650 space-y-1.5'><li>Avoid duplication & save cost</li><li>Simplify procedures</li><li>Enhance transparency</li></ul>
+                                      </div>
+                                      <div class='bg-emerald-50/40 dark:bg-emerald-950/10 p-5 rounded-2xl border border-emerald-100/50 dark:border-emerald-900/30'>
+                                          <h4 class='font-bold text-emerald-700 dark:text-emerald-400 mb-2'>External Impacts</h4>
+                                          <ul class='list-disc list-inside text-sm mt-2 text-slate-650 space-y-1.5'><li>Speed in service delivery</li><li>Increased flexibility & innovation</li><li>Citizen empowerment</li></ul>
+                                      </div>
+                                  </div>
+                              </section>
+                          </div>
+                      `,
+                      keyTerms: ["Bureaucracy", "Proactive Services", "Transparency"],
+                      notes: "The shift is from focusing on 'transaction' to 'citizen satisfaction'."
+                  }
+              },
+              {
+                  id: 3,
+                  ar: {
+                      title: "الفصل الثالث: مراحل التطور والتصنيفات",
+                      overview: "مراحل نضوج الحكومة الإلكترونية وأنواع التفاعل بين الأطراف المختلفة.",
+                      content: `
+                          <div class="space-y-8">
+                              <section>
+                                  <h3 class='text-lg md:text-xl font-bold mb-4 text-primary-600 dark:text-accent'><i class="fas fa-exchange-alt text-sm"></i> تصنيفات التفاعل</h3>
+                                  <div class='grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-center'>
+                                      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center">
+                                          <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-3 text-xl font-black">G2B</div>
+                                          <div class="text-sm font-bold">حكومة إلى أعمال</div>
+                                      </div>
+                                      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center">
+                                          <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center mb-3 text-xl font-black">G2G</div>
+                                          <div class="text-sm font-bold">حكومة إلى حكومة</div>
+                                      </div>
+                                      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center">
+                                          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3 text-xl font-black">G2C</div>
+                                          <div class="text-sm font-bold">حكومة إلى مواطن</div>
+                                      </div>
+                                  </div>
+                              </section>
+  
+                              <section>
+                                  <h3 class='text-lg md:text-xl font-bold mb-6 text-primary-600 dark:text-accent'><i class="fas fa-chart-line text-sm"></i> مراحل التطور</h3>
+                                  <div class='space-y-6 relative before:absolute before:inset-0 before:right-5 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-indigo-200 dark:before:via-gray-800 before:to-transparent'>
+                                      
+                                      <div class="relative flex items-start gap-4">
+                                          <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-600 text-white font-bold shadow-md shrink-0 z-10">1</div>
+                                          <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border dark:border-gray-700 w-full">
+                                              <h4 class="font-bold text-base mb-1 text-slate-800 dark:text-white">الحضور الإلكتروني (Information)</h4>
+                                              <p class="text-xs text-gray-500 dark:text-gray-400">نشر معلومات ونماذج حكومية باتجاه واحد فقط دون تفاعل.</p>
+                                          </div>
+                                      </div>
+                                      
+                                      <div class="relative flex items-start gap-4">
+                                          <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-600 text-white font-bold shadow-md shrink-0 z-10">2</div>
+                                          <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border dark:border-gray-700 w-full">
+                                              <h4 class="font-bold text-base mb-1 text-slate-800 dark:text-white">التفاعل (Interaction)</h4>
+                                              <p class="text-xs text-gray-500 dark:text-gray-400">تنزيل النماذج، والتواصل الإلكتروني ثنائي الاتجاه مثل البريد الإلكتروني.</p>
+                                          </div>
+                                      </div>
+                                      
+                                      <div class="relative flex items-start gap-4">
+                                          <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-600 text-white font-bold shadow-md shrink-0 z-10">3</div>
+                                          <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border dark:border-gray-700 w-full">
+                                              <h4 class="font-bold text-base mb-1 text-slate-800 dark:text-white">المعاملات (Transaction)</h4>
+                                              <p class="text-xs text-gray-500 dark:text-gray-400">تقديم طلبات ودفع الرسوم والمخالفات إلكترونيًا بالكامل ودون زيارة الدائرة.</p>
+                                          </div>
+                                      </div>
+                                      
+                                      <div class="relative flex items-start gap-4">
+                                          <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-600 text-white font-bold shadow-md shrink-0 z-10">4</div>
+                                          <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border dark:border-gray-700 w-full">
+                                              <h4 class="font-bold text-base mb-1 text-slate-800 dark:text-white">التكامل والتحول الرقمي (Integration)</h4>
+                                              <p class="text-xs text-gray-500 dark:text-gray-400">نافذة واحدة لجميع الخدمات، وتبادل البيانات البيني بين الدوائر بشكل استباقي.</p>
+                                          </div>
+                                      </div>
+                                      
+                                      <div class="relative flex items-start gap-4">
+                                          <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-600 text-white font-bold shadow-md shrink-0 z-10">5</div>
+                                          <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border dark:border-gray-700 w-full">
+                                              <h4 class="font-bold text-base mb-1 text-slate-800 dark:text-white">الحكومة الذكية (Smart Gov)</h4>
+                                              <p class="text-xs text-gray-500 dark:text-gray-400">استخدام الذكاء الاصطناعي، التنبؤ بالخدمات، واتخاذ القرارات الذكية بناءً على البيانات.</p>
+                                          </div>
+                                      </div>
+  
+                                  </div>
+                              </section>
+                          </div>
+                      `,
+                      keyTerms: ["G2C", "G2B", "G2G", "Transaction", "Smart Gov"],
+                      notes: "التكامل الأفقي يسمح بالوصول للخدمات 24/7 ويعد من أعقد مستويات المبادرات الإلكترونية."
+                  },
+                  en: {
+                      title: "Chapter 3: Evolution Stages & Classifications",
+                      overview: "Maturity stages of E-Government and interaction types.",
+                      content: `
+                          <div class="space-y-6">
+                              <h3 class='text-lg md:text-xl font-bold mb-2 text-primary-600 dark:text-accent'>Classifications</h3>
+                              <ul class='grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6'>
+                                  <li class="bg-white dark:bg-gray-800 p-4 rounded-xl border dark:border-gray-700 text-center font-bold">G2B: Gov to Business</li>
+                                  <li class="bg-white dark:bg-gray-800 p-4 rounded-xl border dark:border-gray-700 text-center font-bold">G2G: Gov to Gov</li>
+                                  <li class="bg-white dark:bg-gray-800 p-4 rounded-xl border dark:border-gray-700 text-center font-bold">G2C: Gov to Citizen</li>
+                              </ul>
+                              <h3 class='text-lg md:text-xl font-bold mb-2 text-primary-600 dark:text-accent'>Stages of Evolution</h3>
+                              <ol class='list-decimal list-inside space-y-2.5 text-slate-650'>
+                                  <li><strong>Information Stage (Presence):</strong> One-way information publishing.</li>
+                                  <li><strong>Interaction Stage:</strong> Downloading forms and communication.</li>
+                                  <li><strong>Transaction Stage:</strong> Complete online transactions & payment.</li>
+                                  <li><strong>Integration Stage:</strong> Unified portal with cross-agency data integration.</li>
+                                  <li><strong>Smart Government Stage:</strong> Predictive AI and data-driven policies.</li>
+                              </ol>
+                          </div>
+                      `,
+                      keyTerms: ["G2C", "G2B", "G2G", "Stages"],
+                      notes: "Horizontal integration is highly complex but allows 24/7 access."
+                  }
+              },
+              {
+                  id: 4,
+                  ar: {
+                      title: "الفصل الرابع: المعوقات والتحديات",
+                      overview: "التحديات التقنية، التنظيمية، البشرية، والمالية التي تواجه التطبيق.",
+                      content: `
+                          <div class='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                              <div class='bg-white dark:bg-gray-850 p-5 rounded-2xl shadow-sm border-r-4 border-red-500 flex flex-col justify-between'>
+                                  <div>
+                                      <h4 class='font-bold text-base mb-2 text-red-600 dark:text-red-400'><i class="fas fa-microchip ml-1.5"></i> 1. المعوقات التقنية</h4>
+                                      <ul class='space-y-2 text-xs md:text-sm text-gray-500 dark:text-gray-300 font-medium'>
+                                          <li>- ضعف البنية التحتية والاتصالات.</li>
+                                          <li>- الأنظمة القديمة (Legacy Systems).</li>
+                                          <li>- الثغرات والمخاوف الأمنية.</li>
+                                      </ul>
+                                  </div>
+                              </div>
+                              <div class='bg-white dark:bg-gray-850 p-5 rounded-2xl shadow-sm border-r-4 border-orange-500 flex flex-col justify-between'>
+                                  <div>
+                                      <h4 class='font-bold text-base mb-2 text-orange-600 dark:text-orange-400'><i class="fas fa-sitemap ml-1.5"></i> 2. المعوقات التنظيمية</h4>
+                                      <ul class='space-y-2 text-xs md:text-sm text-gray-500 dark:text-gray-300 font-medium'>
+                                          <li>- البيروقراطية وتضخم الإجراءات.</li>
+                                          <li>- مقاومة التغيير من قبل الموظفين.</li>
+                                          <li>- غياب الرؤية والاستراتيجية الواضحة.</li>
+                                      </ul>
+                                  </div>
+                              </div>
+                              <div class='bg-white dark:bg-gray-850 p-5 rounded-2xl shadow-sm border-r-4 border-blue-500 flex flex-col justify-between'>
+                                  <div>
+                                      <h4 class='font-bold text-base mb-2 text-blue-600 dark:text-blue-400'><i class="fas fa-users-cog ml-1.5"></i> 3. المعوقات البشرية</h4>
+                                      <ul class='space-y-2 text-xs md:text-sm text-gray-500 dark:text-gray-300 font-medium'>
+                                          <li>- نقص الكوادر المتخصصة (IT).</li>
+                                          <li>- ضعف المهارات الرقمية لدى فئات من المواطنين.</li>
+                                      </ul>
+                                  </div>
+                              </div>
+                              <div class='bg-white dark:bg-gray-850 p-5 rounded-2xl shadow-sm border-r-4 border-emerald-500 flex flex-col justify-between'>
+                                  <div>
+                                      <h4 class='font-bold text-base mb-2 text-emerald-600 dark:text-emerald-400'><i class="fas fa-wallet ml-1.5"></i> 4. معوقات أخرى</h4>
+                                      <ul class='space-y-2 text-xs md:text-sm text-gray-500 dark:text-gray-300 font-medium'>
+                                          <li>- التكاليف المالية العالية للتأسيس.</li>
+                                          <li>- غياب التشريعات والقوانين الموائمة.</li>
+                                          <li>- الفجوة الرقمية (Digital Divide).</li>
+                                      </ul>
+                                  </div>
+                              </div>
+                          </div>
+                      `,
+                      keyTerms: ["مقاومة التغيير", "الفجوة الرقمية", "الأنظمة القديمة (Legacy)"],
+                      notes: "من أهم أسباب فشل الأنظمة الجديدة إطلاقها دون إجراء إعادة هندسة الإجراءات (BPR) أولاً."
+                  },
+                  en: {
+                      title: "Chapter 4: Obstacles & Challenges",
+                      overview: "Technical, organizational, human, and financial challenges.",
+                      content: `
+                          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border-l-4 border-red-500">
+                                  <h4 class="font-bold text-red-650 mb-2">Technical Obstacles</h4>
+                                  <p class="text-sm text-slate-500">Weak infrastructure, Legacy Systems, and cybersecurity concerns.</p>
+                              </div>
+                              <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border-l-4 border-orange-500">
+                                  <h4 class="font-bold text-orange-650 mb-2">Organizational Obstacles</h4>
+                                  <p class="text-sm text-slate-500">Administrative bureaucracy and resistance to change from employees.</p>
+                              </div>
+                              <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border-l-4 border-blue-500">
+                                  <h4 class="font-bold text-blue-650 mb-2">Human Obstacles</h4>
+                                  <p class="text-sm text-slate-500">Shortage of technical skills and lack of digital literacy among users.</p>
+                              </div>
+                              <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border-l-4 border-emerald-500">
+                                  <h4 class="font-bold text-emerald-650 mb-2">Financial & Legal</h4>
+                                  <p class="text-sm text-slate-500">High setup costs, lack of supporting laws, and the digital divide.</p>
+                              </div>
+                          </div>
+                      `,
+                      keyTerms: ["Resistance to change", "Digital Divide", "Legacy Systems"],
+                      notes: "Systems fail often due to lack of Business Process Reengineering (BPR)."
+                  }
+              },
+              {
+                  id: 5,
+                  ar: {
+                      title: "الفصل الخامس: المستلزمات والمخاطر الأمنية",
+                      overview: "متطلبات البناء، تطبيقات الذكاء الاصطناعي، والمخاطر السيبرانية.",
+                      content: `
+                          <div class="space-y-6">
+                              <section>
+                                  <h3 class='text-lg md:text-xl font-bold mb-3 text-primary-600 dark:text-accent'><i class="fas fa-tools text-sm"></i> مستلزمات البناء</h3>
+                                  <div class="flex flex-wrap gap-2 mb-6">
+                                      <span class="bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 px-3.5 py-1.5 rounded-xl text-xs md:text-sm font-bold border border-indigo-150/40 dark:border-slate-800">إطار استراتيجي ورؤية</span>
+                                      <span class="bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 px-3.5 py-1.5 rounded-xl text-xs md:text-sm font-bold border border-indigo-150/40 dark:border-slate-800">بنية تحتية تقنية قوية</span>
+                                      <span class="bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 px-3.5 py-1.5 rounded-xl text-xs md:text-sm font-bold border border-indigo-150/40 dark:border-slate-800">تشريعات وإطار قانوني</span>
+                                      <span class="bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 px-3.5 py-1.5 rounded-xl text-xs md:text-sm font-bold border border-indigo-150/40 dark:border-slate-800">إعادة هندسة الإجراءات BPR</span>
+                                      <span class="bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 px-3.5 py-1.5 rounded-xl text-xs md:text-sm font-bold border border-indigo-150/40 dark:border-slate-800">أمن سيبراني صارم</span>
+                                  </div>
+                              </section>
+  
+                              <section class="p-5 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                  <h3 class='text-lg md:text-xl font-bold mb-2.5 text-primary-600 dark:text-accent'><i class="fas fa-robot text-sm"></i> تطبيقات الذكاء الاصطناعي (AI)</h3>
+                                  <p class='text-slate-700 dark:text-gray-300 leading-relaxed text-sm md:text-base'>المساعدات الذكية والمحادثة التفاعلية (Chatbots كـ "رشيد" في دبي)، تحليل البيانات الضخمة للسياسات العامة، الكشف عن التهرب الضريبي، إدارة حركة المرور والمدن الذكية، التنبؤ بحدوث الأزمات، والتعرف على الوجوه لتعزيز الأمن.</p>
+                              </section>
+  
+                              <section>
+                                  <h3 class='text-lg md:text-xl font-bold mb-3 text-red-600 dark:text-red-400'><i class="fas fa-shield-virus text-sm"></i> المخاطر والتهديدات السيبرانية</h3>
+                                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                      <div class="p-4 bg-red-50/30 dark:bg-red-950/10 rounded-2xl border border-red-100/50 dark:border-red-900/30 flex gap-3">
+                                          <div class="text-red-500 text-xl"><i class="fas fa-network-wired"></i></div>
+                                          <div>
+                                              <h4 class="font-bold text-sm text-slate-800 dark:text-white">حجب الخدمة (DDoS)</h4>
+                                              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">إغراق الخوادم بطلبات وهمية لتعطيل الخدمات الحكومية.</p>
+                                          </div>
+                                      </div>
+                                      <div class="p-4 bg-red-50/30 dark:bg-red-950/10 rounded-2xl border border-red-100/50 dark:border-red-900/30 flex gap-3">
+                                          <div class="text-red-500 text-xl"><i class="fas fa-database"></i></div>
+                                          <div>
+                                              <h4 class="font-bold text-sm text-slate-800 dark:text-white">تسريب البيانات (Data Breach)</h4>
+                                              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">الوصول غير المصرح به لقواعد البيانات وسرقة معلومات المواطنين.</p>
+                                          </div>
+                                      </div>
+                                      <div class="p-4 bg-red-50/30 dark:bg-red-950/10 rounded-2xl border border-red-100/50 dark:border-red-900/30 flex gap-3">
+                                          <div class="text-red-500 text-xl"><i class="fas fa-lock"></i></div>
+                                          <div>
+                                              <h4 class="font-bold text-sm text-slate-800 dark:text-white">برمجيات الفدية (Ransomware)</h4>
+                                              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">تشفير الملفات الحساسة والمطالبة بمبالغ مالية لفكها.</p>
+                                          </div>
+                                      </div>
+                                      <div class="p-4 bg-red-50/30 dark:bg-red-950/10 rounded-2xl border border-red-100/50 dark:border-red-900/30 flex gap-3">
+                                          <div class="text-red-500 text-xl"><i class="fas fa-user-secret"></i></div>
+                                          <div>
+                                              <h4 class="font-bold text-sm text-slate-800 dark:text-white">التهديدات الداخلية (Insider)</h4>
+                                              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">إساءة استخدام الصلاحيات من قبل الموظفين المخولين.</p>
+                                          </div>
+                                      </div>
+                                  </div>
+                              </section>
+                          </div>
+                      `,
+                      keyTerms: ["BPR", "DDoS", "Ransomware", "Interoperability", "Chatbots"],
+                      notes: "لوحة المعلومات (Dashboard) ضرورية لدعم اتخاذ القرار عبر مؤشرات الأداء (KPIs)."
+                  },
+                  en: {
+                      title: "Chapter 5: Requirements & Security Risks",
+                      overview: "Building requirements, AI applications, and Cyber Risks.",
+                      content: `
+                          <div class="space-y-6">
+                              <h3 class='text-lg md:text-xl font-bold mb-2 text-primary-600 dark:text-accent'>Cybersecurity Risks</h3>
+                              <ul class='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                                  <li class="bg-red-50/30 dark:bg-red-950/10 p-4 rounded-xl border border-red-100/30 text-sm">
+                                      <strong>DDoS Attacks:</strong> Flooding servers with traffic to halt services.
+                                  </li>
+                                  <li class="bg-red-50/30 dark:bg-red-950/10 p-4 rounded-xl border border-red-100/30 text-sm">
+                                      <strong>Data Breach:</strong> Stealing highly sensitive citizen database entries.
+                                  </li>
+                                  <li class="bg-red-50/30 dark:bg-red-950/10 p-4 rounded-xl border border-red-100/30 text-sm">
+                                      <strong>Ransomware:</strong> Encrypting public systems for financial blackmail.
+                                  </li>
+                                  <li class="bg-red-50/30 dark:bg-red-950/10 p-4 rounded-xl border border-red-100/30 text-sm">
+                                      <strong>Insider Threats:</strong> Disgruntled or compromised staff abusing privileges.
+                                  </li>
+                              </ul>
+                          </div>
+                      `,
+                      keyTerms: ["BPR", "DDoS", "Ransomware"],
+                      notes: "Dashboards are essential for KPIs."
+                  }
+              },
+              {
+                  id: 6,
+                  ar: {
+                      title: "الفصل السادس: الإدارة الإلكترونية والتجارب العالمية",
+                      overview: "مقارنة الإدارة، وأفضل الممارسات العالمية.",
+                      content: `
+                          <div class="space-y-6">
+                              <section>
+                                  <h3 class='text-lg md:text-xl font-bold mb-3 text-primary-600 dark:text-accent'><i class="fas fa-balance-scale text-sm"></i> مقارنة الإدارة</h3>
+                                  <div class="overflow-x-auto mb-6 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                      <table class='w-full text-right border-collapse min-w-[500px]'>
+                                          <thead>
+                                              <tr class='bg-indigo-50 dark:bg-slate-900 font-bold text-primary-600 dark:text-accent border-b border-gray-100 dark:border-gray-800'>
+                                                  <th class='p-4 text-sm'>وجه المقارنة</th>
+                                                  <th class='p-4 text-sm'>الإدارة الإلكترونية</th>
+                                                  <th class='p-4 text-sm'>الإدارة الذكية</th>
+                                              </tr>
+                                          </thead>
+                                          <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+                                              <tr>
+                                                  <td class='p-4 font-bold text-sm bg-indigo-50/10 dark:bg-slate-900/10'>التركيز</td>
+                                                  <td class='p-4 text-sm text-gray-650'>رقمنة وأتمتة الإجراءات والخدمات.</td>
+                                                  <td class='p-4 text-sm text-gray-650 bg-indigo-50/10 dark:bg-slate-900/10'>تحليل تنبؤي، واتخاذ قرار ذكي ذاتي.</td>
+                                              </tr>
+                                              <tr>
+                                                  <td class='p-4 font-bold text-sm bg-indigo-50/10 dark:bg-slate-900/10'>طبيعة الخدمة</td>
+                                                  <td class='p-4 text-sm text-gray-650'>تفاعلية بناءً على طلب العميل.</td>
+                                                  <td class='p-4 text-sm text-gray-650 bg-indigo-50/10 dark:bg-slate-900/10'>استباقية وذكاء تكيّفي تلقائي.</td>
+                                              </tr>
+                                              <tr>
+                                                  <td class='p-4 font-bold text-sm bg-indigo-50/10 dark:bg-slate-900/10'>البيانات</td>
+                                                  <td class='p-4 text-sm text-gray-650'>الاعتماد على قواعد البيانات المهيكلة والمخزنة.</td>
+                                                  <td class='p-4 text-sm text-gray-650 bg-indigo-50/10 dark:bg-slate-900/10'>البيانات الضخمة (Big Data) وإنترنت الأشياء.</td>
+                                              </tr>
+                                          </tbody>
+                                      </table>
+                                  </div>
+                              </section>
+  
+                              <section>
+                                  <h3 class='text-lg md:text-xl font-bold mb-4 text-primary-600 dark:text-accent'><i class="fas fa-globe-americas text-sm"></i> تجارب عالمية (تصنيف الأمم المتحدة 2024)</h3>
+                                  <div class="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+                                      <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center flex flex-col justify-between items-center">
+                                          <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-2.5 text-xl"><i class="fas fa-globe-europe"></i></div>
+                                          <div class="font-bold text-sm">الدنمارك</div>
+                                          <div class="text-[10px] text-gray-400 font-semibold mt-1">المركز الأول عالميًا</div>
+                                      </div>
+                                      <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center flex flex-col justify-between items-center">
+                                          <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-2.5 text-xl"><i class="fas fa-microchip"></i></div>
+                                          <div class="font-bold text-sm">إستونيا</div>
+                                          <div class="text-[10px] text-gray-400 font-semibold mt-1">الأفضل تقنيًا (X-Road)</div>
+                                      </div>
+                                      <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center flex flex-col justify-between items-center">
+                                          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-2.5 text-xl"><i class="fas fa-mobile-alt"></i></div>
+                                          <div class="font-bold text-sm">سنغافورة</div>
+                                          <div class="text-[10px] text-gray-400 font-semibold mt-1">تجربة المستخدم (SingPass)</div>
+                                      </div>
+                                      <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center flex flex-col justify-between items-center">
+                                          <div class="w-12 h-12 rounded-xl bg-yellow-500/10 text-yellow-500 flex items-center justify-center mb-2.5 text-xl"><i class="fas fa-star"></i></div>
+                                          <div class="font-bold text-sm">الإمارات</div>
+                                          <div class="text-[10px] text-gray-400 font-semibold mt-1">الأفضل عربيًا (حكومة بلا ورق)</div>
+                                      </div>
+                                      <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center flex flex-col justify-between items-center col-span-2 md:col-span-1">
+                                          <div class="w-12 h-12 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center mb-2.5 text-xl"><i class="fas fa-chart-bar"></i></div>
+                                          <div class="font-bold text-sm">بريطانيا</div>
+                                          <div class="text-[10px] text-gray-400 font-semibold mt-1">الريادة في تحليل البيانات</div>
+                                      </div>
+                                  </div>
+                              </section>
+                          </div>
+                      `,
+                      keyTerms: ["Big Data", "SingPass", "X-Road", "Dubai Now"],
+                      notes: "الإدارة الذكية تمثل المرحلة المتقدمة جداً والتي تعتمد على أدوات ذكاء الأعمال (BI) والتعلم الآلي لاتخاذ قرارات استباقية."
+                  },
+                  en: {
+                      title: "Chapter 6: E-Management & Global Experiences",
+                      overview: "Comparing E-Management to Smart Management, and top global practices.",
+                      content: `
+                          <div class="space-y-6">
+                              <h3 class='text-lg md:text-xl font-bold mb-3 text-primary-600 dark:text-accent'>E-Management vs Smart Management</h3>
+                              <p class="text-sm">Review Arabic section for deep table comparison. Broadly, smart management shifts from manual triggers to predictive models using Big Data and ML.</p>
+                              <h3 class='text-lg md:text-xl font-bold mb-3 text-primary-600 dark:text-accent'>Global Leaders</h3>
+                              <ul class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                  <li class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border dark:border-gray-700"><strong>Denmark:</strong> Ranked #1 globally (UN 2024).</li>
+                                  <li class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border dark:border-gray-700"><strong>Estonia:</strong> Best technical structure (X-Road).</li>
+                                  <li class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border dark:border-gray-700"><strong>Singapore:</strong> Seamless UX via SingPass.</li>
+                                  <li class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border dark:border-gray-700"><strong>UAE:</strong> Best in Arab world (Paperless).</li>
+                              </ul>
+                          </div>
+                      `,
+                      keyTerms: ["Big Data", "SingPass", "X-Road"],
+                      notes: "Smart management relies on BI and ML for proactive decisions."
+                  }
+              }
+          ];
+  
+          // --- 2. EXTENDED FLASHCARDS DATA (Comprehensive over all 6 chapters) ---
+          const flashcardsData = [
+              // Chapter 1
+              { term_ar: "الحكومة الإلكترونية", def_ar: "استخدام تكنولوجيا الاتصالات وتطبيقات الإنترنت لتوفير وصول أسهل للخدمات وتحسين جودتها.", term_en: "E-Government", def_en: "Using ICT to provide services to citizens and businesses." },
+              { term_ar: "الحكومة الذكية", def_ar: "مرحلة متقدمة تعتمد على البيانات الضخمة والذكاء الاصطناعي لتقديم خدمات استباقية.", term_en: "Smart Government", def_en: "Advanced stage using Big Data and AI for proactive services." },
+              { term_ar: "One Stop Shop", def_ar: "نافذة واحدة متكاملة تقدم كافة الخدمات الحكومية للمواطن في مكان واحد.", term_en: "One Stop Shop", def_en: "A single integrated portal providing all government services." },
+              // Chapter 2
+              { term_ar: "البيروقراطية", def_ar: "التعقيد الإداري وطول الإجراءات؛ وتعتبر الحكومة الإلكترونية أداة لتقليلها.", term_en: "Bureaucracy", def_en: "Administrative complexity; E-gov aims to reduce it." },
+              { term_ar: "الآثار الداخلية", def_ar: "تجنب التكرار، خفض التكاليف، وتبادل المعلومات بفعالية بين الدوائر الحكومية.", term_en: "Internal Impacts", def_en: "Cost reduction and info sharing within government." },
+              { term_ar: "الخدمات الاستباقية", def_ar: "تقديم الخدمة للمواطن قبل أن يطلبها بناءً على تحليل البيانات والذكاء الاصطناعي.", term_en: "Proactive Services", def_en: "Providing services before requested using AI." },
+              // Chapter 3
+              { term_ar: "G2C", def_ar: "الخدمات الموجهة من الحكومة إلى المواطن (Government to Citizen).", term_en: "G2C", def_en: "Government to Citizen interaction." },
+              { term_ar: "G2B", def_ar: "التعاملات والخدمات الموجهة من الحكومة إلى قطاع الأعمال والشركات.", term_en: "G2B", def_en: "Government to Business interaction." },
+              { term_ar: "G2G", def_ar: "الربط والتكامل وتبادل البيانات بين الدوائر الحكومية المختلفة.", term_en: "G2G", def_en: "Government to Government interaction." },
+              { term_ar: "مرحلة الحضور الإلكتروني", def_ar: "أولى المراحل؛ تشمل إنشاء مواقع ونشر معلومات بصيغة اتجاه واحد.", term_en: "Information Stage", def_en: "First stage; publishing info one-way." },
+              { term_ar: "مرحلة التفاعل", def_ar: "ثاني المراحل؛ إمكانية تنزيل النماذج والتواصل عبر البريد الإلكتروني.", term_en: "Interaction Stage", def_en: "Downloading forms and email communication." },
+              { term_ar: "مرحلة المعاملات", def_ar: "ثالث المراحل؛ تقديم الطلبات ودفع الرسوم إلكترونياً بالكامل.", term_en: "Transaction Stage", def_en: "Submitting apps and paying online." },
+              { term_ar: "مرحلة التكامل", def_ar: "رابع المراحل؛ تقديم خدمات عبر بوابة وطنية موحدة وتبادل تلقائي للبيانات.", term_en: "Integration Stage", def_en: "Unified portal with automatic data exchange." },
+              // Chapter 4
+              { term_ar: "الأنظمة القديمة (Legacy)", def_ar: "أنظمة وبرمجيات قديمة تعيق التكامل، وتعتبر من أبرز المعوقات التقنية.", term_en: "Legacy Systems", def_en: "Old systems that hinder integration." },
+              { term_ar: "مقاومة التغيير", def_ar: "رفض الموظفين للأنظمة الجديدة خوفاً من فقدان الوظيفة أو صعوبة الاستخدام (معوق إداري).", term_en: "Resistance to Change", def_en: "Employees refusing new systems out of fear." },
+              { term_ar: "الفجوة الرقمية", def_ar: "تفاوت المهارات وإمكانيات الوصول للإنترنت بين طبقات المجتمع أو المناطق (معوق اجتماعي).", term_en: "Digital Divide", def_en: "Gap in digital access and skills in society." },
+              // Chapter 5
+              { term_ar: "BPR", def_ar: "إعادة هندسة الإجراءات: تبسيط العمليات وإلغاء الخطوات المتكررة قبل أتمتتها.", term_en: "BPR", def_en: "Business Process Reengineering to simplify before automation." },
+              { term_ar: "هجوم حجب الخدمة (DDoS)", def_ar: "إغراق الموقع بخوادم وطلبات وهمية بهدف تعطيله وإيقاف الخدمة.", term_en: "DDoS Attack", def_en: "Flooding a server with fake requests to deny service." },
+              { term_ar: "برمجيات الفدية (Ransomware)", def_ar: "برمجيات خبيثة تقوم بتشفير البيانات والمطالبة بأموال لاسترجاعها (مثل WannaCry).", term_en: "Ransomware", def_en: "Malware that encrypts data and demands a ransom." },
+              { term_ar: "اختراق البيانات (Data Breach)", def_ar: "الوصول غير المصرح به لقواعد البيانات بهدف سرقة المعلومات (أرقام وطنية، هواتف).", term_en: "Data Breach", def_en: "Unauthorized access to steal data." },
+              { term_ar: "التهديد الداخلي (Insider Threat)", def_ar: "قيام موظف بإساءة استخدام صلاحياته للاطلاع على بيانات حساسة أو تسريبها.", term_en: "Insider Threat", def_en: "Employee misusing privileges." },
+              { term_ar: "Chatbots", def_ar: "مساعدات ذكية تعتمد على الذكاء الاصطناعي للرد الآلي على استفسارات المواطنين.", term_en: "Chatbots", def_en: "AI-powered smart assistants for automated replies." },
+              { term_ar: "لوحة المعلومات (Dashboard)", def_ar: "واجهة بصرية تعرض مؤشرات الأداء (KPIs) لدعم اتخاذ القرارات السريعة والصحيحة.", term_en: "Dashboard", def_en: "Visual interface showing KPIs for decision making." },
+              // Chapter 6
+              { term_ar: "منصة X-Road", def_ar: "نظام التبادل البيني التقني الرائد في إستونيا، والذي جعلها الأفضل تقنياً عالمياً.", term_en: "X-Road", def_en: "Estonia's leading technical interoperability platform." },
+              { term_ar: "SingPass", def_ar: "نظام الهوية الرقمية الموحد في سنغافورة، والذي ساهم في جعلها الأفضل في تجربة المستخدم.", term_en: "SingPass", def_en: "Singapore's unified digital identity platform." },
+              { term_ar: "Dubai Now", def_ar: "تطبيق متكامل لحكومة دبي يجسد نموذج الخدمات الاستباقية والحكومة بلا ورق.", term_en: "Dubai Now", def_en: "Dubai's integrated app for proactive, paperless services." },
+              { term_ar: "الدنمارك (في التصنيف)", def_ar: "الدولة التي تصدرت الترتيب العالمي في تقرير الأمم المتحدة للحكومة الرقمية 2024.", term_en: "Denmark (Ranking)", def_en: "Ranked #1 globally in UN 2024 Digital Gov report." },
+              { term_ar: "بريطانيا (UK)", def_ar: "تتميز عالمياً كأفضل دولة في تحليل البيانات واستخدام لوحات المعلومات (Dashboards).", term_en: "UK", def_en: "Globally best in data analytics and Dashboards." },
+              { term_ar: "Big Data (البيانات الضخمة)", def_ar: "أحد الأعمدة الأساسية التي تعتمد عليها الإدارة الذكية للتنبؤ واتخاذ القرارات الاستباقية.", term_en: "Big Data", def_en: "Core pillar for Smart Management for predictive decisions." }
+          ];
+  
+          // --- 3. EXTENDED QUIZ DATA (Includes full English translations for all types) ---
+          const quizData = {
+              mcq: [
+                  { 
+                      q: "ما هي المرحلة الأولى من مراحل تطور الحكومة الإلكترونية؟", 
+                      options: ["التكامل", "التفاعل", "الحضور الإلكتروني", "الحكومة الذكية"], 
+                      eq: "What is the first stage of E-Government development?", 
+                      eoptions: ["Integration", "Interaction", "E-Presence (Information)", "Smart Government"],
+                      a: 2 
+                  },
+                  { 
+                      q: "المرحلة التي تتيح تقديم الطلبات ودفع الرسوم إلكترونياً تسمى:", 
+                      options: ["المعاملات", "التفاعل", "التكامل", "الحضور"], 
+                      eq: "The stage that allows submitting applications and paying fees online is called:", 
+                      eoptions: ["Transactions", "Interaction", "Integration", "Presence"],
+                      a: 0 
+                  },
+                  { 
+                      q: "منصة X-Road هي نموذج تقني رائد يتبع لدولة:", 
+                      options: ["سنغافورة", "الإمارات", "إستونيا", "كوريا الجنوبية"], 
+                      eq: "The X-Road platform is a pioneering technical model belonging to:", 
+                      eoptions: ["Singapore", "UAE", "Estonia", "South Korea"],
+                      a: 2 
+                  },
+                  { 
+                      q: "تفاعل الحكومة الإلكترونية الموجه للشركات يرمز له بـ:", 
+                      options: ["G2C", "G2G", "G2B", "B2B"], 
+                      eq: "E-Government interaction directed to businesses is symbolized by:", 
+                      eoptions: ["G2C", "G2G", "G2B", "B2B"],
+                      a: 2 
+                  },
+                  { 
+                      q: "من المعوقات التنظيمية لتطبيق الحكومة الإلكترونية:", 
+                      options: ["ضعف البنية التحتية", "مقاومة التغيير", "غياب التشريعات", "نقص الكوادر التقنية"], 
+                      eq: "One of the organizational barriers to implementing E-Government is:", 
+                      eoptions: ["Weak infrastructure", "Resistance to change", "Lack of legislation", "Shortage of technical staff"],
+                      a: 1 
+                  },
+                  { 
+                      q: "هجوم إغراق الخوادم بطلبات وهمية لتعطيل الخدمة يسمى:", 
+                      options: ["Ransomware", "DDoS", "Phishing", "Data Breach"], 
+                      eq: "An attack that floods servers with fake requests to disable service is called:", 
+                      eoptions: ["Ransomware", "DDoS", "Phishing", "Data Breach"],
+                      a: 1 
+                  },
+                  { 
+                      q: "الدولة التي تصدرت تقرير الأمم المتحدة 2024 للحكومة الرقمية هي:", 
+                      options: ["كوريا الجنوبية", "إستونيا", "الدنمارك", "سنغافورة"], 
+                      eq: "The country that topped the UN 2024 Digital Government report is:", 
+                      eoptions: ["South Korea", "Estonia", "Denmark", "Singapore"],
+                      a: 2 
+                  },
+                  { 
+                      q: "مفهوم 'إعادة هندسة الإجراءات' يرمز له بـ:", 
+                      options: ["ERP", "CRM", "BPR", "KPI"], 
+                      eq: "The concept of 'Business Process Reengineering' is symbolized by:", 
+                      eoptions: ["ERP", "CRM", "BPR", "KPI"],
+                      a: 2 
+                  },
+                  { 
+                      q: "الاعتماد على 'البيانات الضخمة' (Big Data) هو سمة أساسية لـ:", 
+                      options: ["الإدارة التقليدية", "الحكومة المبكرة", "الحكومة الذكية", "التفاعل G2G فقط"], 
+                      eq: "Relying on 'Big Data' is a key characteristic of:", 
+                      eoptions: ["Traditional Management", "Early E-Government", "Smart Government", "G2G Interaction Only"],
+                      a: 2 
+                  },
+                  { 
+                      q: "إساءة موظف استخدام صلاحياته للاطلاع على بيانات مواطنين يعتبر:", 
+                      options: ["هجوم سيبراني", "تهديد داخلي (Insider)", "تهديد بنية تحتية", "خطأ فني"], 
+                      eq: "An employee misusing their privileges to access citizens' data is considered:", 
+                      eoptions: ["Cyber attack", "Insider threat", "Infrastructure threat", "Technical error"],
+                      a: 1 
+                  }
+              ],
+              tf: [
+                  { 
+                      q: "تعتمد الإدارة الذكية بشكل أساسي على البيانات المخزنة بالطرق التقليدية.", 
+                      eq: "Smart management relies primarily on data stored in traditional ways.",
+                      a: false 
+                  },
+                  { 
+                      q: "مقاومة التغيير من قبل الموظفين تصنف كمعوق تقني.", 
+                      eq: "Resistance to change by employees is classified as a technical barrier.",
+                      a: false 
+                  },
+                  { 
+                      q: "التكامل الأفقي يسمح للمواطن بالوصول للخدمات على مدار 24 ساعة.", 
+                      eq: "Horizontal integration allows citizens to access services 24/7.",
+                      a: true 
+                  },
+                  { 
+                      q: "اختراق البيانات (Data Breach) يهدف بالأساس إلى إغراق الخادم لتعطيله.", 
+                      eq: "A data breach primarily aims to flood the server to disable it.",
+                      a: false 
+                  },
+                  { 
+                      q: "G2C تعني التعاملات بين الحكومة والشركات الخاصة.", 
+                      eq: "G2C stands for transactions between government and private businesses.",
+                      a: false 
+                  },
+                  { 
+                      q: "تطبيق (سند) في الأردن هو مثال على تسهيل الحصول على الخدمات الحكومية.", 
+                      eq: "The 'Sanad' app in Jordan is an example of facilitating access to government services.",
+                      a: true 
+                  },
+                  { 
+                      q: "الهجمات المدعومة من دول تعرف بالحروب السيبرانية (Cyber Warfare).", 
+                      eq: "State-sponsored attacks are known as Cyber Warfare.",
+                      a: true 
+                  },
+                  { 
+                      q: "مرحلة 'المعاملات' هي المرحلة الأكثر تطوراً في الحكومة الذكية.", 
+                      eq: "The 'Transactions' stage is the most advanced stage in Smart Government.",
+                      a: false 
+                  },
+                  { 
+                      q: "لوحة المعلومات (Dashboard) تساهم في دعم اتخاذ القرار بناءً على مؤشرات الأداء.", 
+                      eq: "A Dashboard contributes to supporting decision-making based on KPIs.",
+                      a: true 
+                  },
+                  { 
+                      q: "النافذة الواحدة (One Stop Shop) تعني تقديم جميع الخدمات الحكومية من خلال موقع وتطبيق موحد.", 
+                      eq: "A One Stop Shop means providing all government services through a unified website and app.",
+                      a: true 
+                  }
+              ],
+              fill: [
+                  { 
+                      q: "استخدام الحكومات لتكنولوجيا الاتصالات لتوفير وصول أسهل للخدمات يسمى _____.", 
+                      eq: "Governments' use of ICT to provide easier access to services is called _____.", 
+                      a: ["الحكومة الإلكترونية", "e-government", "الحكومة الالكترونية", "e government"],
+                      ea: ["e-government", "egovernment", "e government", "electronic government"]
+                  },
+                  { 
+                      q: "النافذة أو الموقع الموحد الذي يقدم كافة الخدمات يسمى _____.", 
+                      eq: "The unified window or website that provides all services is called _____.", 
+                      a: ["نافذة واحدة", "one stop shop", "النافذة الواحدة", "one-stop shop"],
+                      ea: ["one stop shop", "one-stop shop", "single window"]
+                  },
+                  { 
+                      q: "البرمجيات الخبيثة التي تشفر البيانات وتطلب أموالاً تسمى _____.", 
+                      eq: "Malicious software that encrypts data and demands money is called _____.", 
+                      a: ["برمجيات الفدية", "ransomware", "فدية"],
+                      ea: ["ransomware"]
+                  },
+                  { 
+                      q: "إعادة هندسة الإجراءات الإدارية يرمز لها بالاختصار _____.", 
+                      eq: "Business Process Reengineering is abbreviated as _____.", 
+                      a: ["bpr", "BPR"],
+                      ea: ["bpr", "BPR"]
+                  },
+                  { 
+                      q: "تعرف الهجمات التي تغرق الموقع لتعطيله باختصار _____.", 
+                      eq: "Attacks that flood the website to disable it are abbreviated as _____.", 
+                      a: ["ddos", "DDOS", "DDoS"],
+                      ea: ["ddos", "DDOS", "DDoS"]
+                  }
+              ],
+              match: [
+                  {
+                      ar_left: ["G2C", "G2B", "DDoS", "BPR", "Ransomware"],
+                      ar_right: ["إعادة هندسة الإجراءات", "برمجيات الفدية", "حكومة إلى مواطن", "حكومة إلى أعمال", "هجوم حجب الخدمة"],
+                      en_left: ["G2C", "G2B", "DDoS", "BPR", "Ransomware"],
+                      en_right: ["Business Process Reengineering", "Malware demanding money", "Government to Citizen", "Government to Business", "Denial of Service Attack"],
+                      pairs: {0: 2, 1: 3, 2: 4, 3: 0, 4: 1}
+                  },
+                  {
+                      ar_left: ["إستونيا", "سنغافورة", "الإمارات", "المملكة المتحدة", "الدنمارك"],
+                      ar_right: ["تصدرت التصنيف العالمي 2024", "الأفضل في تجربة المستخدم (SingPass)", "الأفضل في التحليل (Dashboard)", "حكومة بلا ورق (Dubai Now)", "الأفضل تقنياً (X-Road)"],
+                      en_left: ["Estonia", "Singapore", "UAE", "UK", "Denmark"],
+                      en_right: ["Topped 2024 Global Ranking", "Best UX (SingPass)", "Best Analytics Dashboard", "Paperless Gov (Dubai Now)", "Best Technically (X-Road)"],
+                      pairs: {0: 4, 1: 1, 2: 3, 3: 2, 4: 0}
+                  }
+              ]
+          };
+  
+          // --- 4. STATE MANAGEMENT (Persisted via LocalStorage) ---
+          let currentLang = localStorage.getItem('e_gov_lang') || 'ar';
+          let currentTheme = localStorage.getItem('e_gov_theme') || 'light';
+          let timerInterval;
+          let timerSeconds = parseInt(localStorage.getItem('e_gov_study_seconds') || '0');
+          let timerMode = localStorage.getItem('e_gov_timer_mode') || 'normal'; // 'normal' or 'pomodoro'
+          let pomodoroState = 'study'; // 'study' or 'break'
+          let pomodoroSecondsLeft = 25 * 60;
+          
+          let userProgress = JSON.parse(localStorage.getItem('e_gov_user_progress') || JSON.stringify({
+              completedChapters: [],
+              quizScores: { mcq: 0, tf: 0, fill: 0, match: 0 },
+              examHighScore: 0
+          }));
+  
+          let currentQuizType = 'mcq';
+          let quizQuestions = [];
+          let currentQIndex = 0;
+          let score = 0;
+          let selectedAnswer = null;
+  
+          // Matching Quiz State
+          let matchedPairs = {}; // LeftIdx -> RightIdx
+          let matchSelectedLeftIdx = null;
+          let matchSelectedRightIdx = null;
+  
+          // --- 5. CORE TRANSLATIONS ---
+          const translations = {
+              ar: {
+                  portal_title: "بوابة الحكومة الإلكترونية",
+                  course_name: "مساق الحكومة الإلكترونية",
+                  instructor: "د. فالح الحوري",
+                  main_menu: "القائمة الرئيسية",
+                  dashboard: "لوحة التحكم",
+                  study_materials: "المادة الدراسية",
+                  mind_map: "الخريطة الذهنية",
+                  practice_menu: "التدريب والمراجعة",
+                  flashcards: "البطاقات التعليمية",
+                  question_bank: "بنك الأسئلة",
+                  final_exam: "محاكاة الامتحان النهائي",
+                  nav_home: "الرئيسية",
+                  nav_study: "الدراسة",
+                  nav_mindmap: "الخريطة",
+                  nav_cards: "بطاقات",
+                  nav_quiz: "اختبار",
+                  score: "النتيجة",
+                  check_answer: "تحقق من الإجابة",
+                  next: "التالي",
+                  retry: "إعادة الاختبار",
+                  correct: "أحسنت! إجابة صحيحة",
+                  wrong: "إجابة خاطئة!",
+                  fill_blank_hint: "اكتب إجابتك هنا...",
+                  select_match: "اختر المطابقة",
+                  study_progress: "نسبة التقدم الدراسي",
+                  readiness: "الجاهزية للامتحان",
+                  dark_mode: "وضع مظلم",
+                  light_mode: "وضع مضيء",
+                  completed: "مكتمل",
+                  chapters_count: "فصول المقرر",
+                  start_quiz: "ابدأ الاختبار",
+                  questions: "سؤال",
+                  back: "رجوع للخلف",
+                  important_note: "إضاءة معرفية / ملاحظة هامة",
+                  key_terms: "مصطلحات مفتاحية",
+                  welcome_back: "أهلاً بك في البوابة التعليمية",
+                  dashboard_subtitle: "تابع تقدمك في فصول مساق الحكومة الإلكترونية واختبر معلوماتك.",
+                  timer_title: "عداد الدراسة",
+                  pomodoro_break: "وقت الاستراحة!",
+                  pomodoro_study: "وقت التركيز والدراسة",
+                  study_time: "إجمالي وقت الدراسة",
+                  stats_summary: "ملخص الأداء العام",
+                  high_scores: "أعلى الدرجات في الاختبارات",
+                  start: "ابدأ الامتحان النهائي",
+                  exam_intro: "محاكاة الامتحان النهائي تحتوي على 20 سؤالاً عشوائياً شاملاً من كل فصول المساق.",
+                  exam_disclaimer: "الرجاء التركيز والإجابة بدقة، الوقت والجاهزية سيتم تسجيلهما.",
+                  cert_title: "شهادة إتمام المساق",
+                  cert_desc: "تشهد بوابة دراسة الحكومة الإلكترونية بأن الطالب قد أتم دراسة المساق واجتاز بنجاح المحاكاة النهائية بنسبة تفوق:",
+                  congratulations: "مبارك النجاح الباهر!",
+                  pass_exam_tip: "احصل على نسبة 75% أو أكثر في الامتحان النهائي للحصول على شهادتك الرقمية.",
+                  average_score: "متوسط الدرجات",
+                  reset_all: "إعادة تعيين التقدم بالكامل"
+              },
+              en: {
+                  portal_title: "E-Gov Portal",
+                  course_name: "E-Government Course",
+                  instructor: "Dr. Faleh Al-Houri",
+                  main_menu: "Main Menu",
+                  dashboard: "Dashboard",
+                  study_materials: "Study Materials",
+                  mind_map: "Mind Map",
+                  practice_menu: "Practice & Quizzes",
+                  flashcards: "Flashcards",
+                  question_bank: "Question Bank",
+                  final_exam: "Final Exam Simulator",
+                  nav_home: "Home",
+                  nav_study: "Study",
+                  nav_mindmap: "Map",
+                  nav_cards: "Cards",
+                  nav_quiz: "Quiz",
+                  score: "Score",
+                  check_answer: "Check Answer",
+                  next: "Next",
+                  retry: "Retry",
+                  correct: "Correct Answer!",
+                  wrong: "Incorrect Answer!",
+                  fill_blank_hint: "Type your answer here...",
+                  select_match: "Select match",
+                  study_progress: "Study Progress",
+                  readiness: "Exam Readiness",
+                  dark_mode: "Dark Mode",
+                  light_mode: "Light Mode",
+                  completed: "Completed",
+                  chapters_count: "Course Chapters",
+                  start_quiz: "Start Quiz",
+                  questions: "Questions",
+                  back: "Go Back",
+                  important_note: "Key Insight / Note",
+                  key_terms: "Key Terms",
+                  welcome_back: "Welcome to E-Gov Portal",
+                  dashboard_subtitle: "Track your progress, view core chapters, and evaluate your knowledge.",
+                  timer_title: "Study Timer",
+                  pomodoro_break: "Break Time!",
+                  pomodoro_study: "Study Time",
+                  study_time: "Total Study Time",
+                  stats_summary: "Performance Summary",
+                  high_scores: "Quiz High Scores",
+                  start: "Start Final Exam",
+                  exam_intro: "The final exam simulator consists of 20 randomized questions covering all chapters.",
+                  exam_disclaimer: "Focus carefully. Your score will update your exam readiness metric.",
+                  cert_title: "Certificate of Completion",
+                  cert_desc: "This is to certify that the student has completed E-Government Course study and passed the final simulator with a score of:",
+                  congratulations: "Congratulations!",
+                  pass_exam_tip: "Get a score of 75% or higher in the final exam to unlock your digital certificate.",
+                  average_score: "Average Score",
+                  reset_all: "Reset All Progress"
+              }
+          };
+  
+          function saveToStorage() {
+              localStorage.setItem('e_gov_user_progress', JSON.stringify(userProgress));
+              localStorage.setItem('e_gov_study_seconds', timerSeconds);
+              localStorage.setItem('e_gov_lang', currentLang);
+              localStorage.setItem('e_gov_theme', currentTheme);
+              localStorage.setItem('e_gov_timer_mode', timerMode);
+          }
+  
+          // --- 6. INITIALIZATION & LAYOUT ---
+          function initApp() {
+              document.documentElement.lang = currentLang;
+              document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+              
+              // Set initial theme
+              if (currentTheme === 'dark') {
+                  document.documentElement.classList.add('dark');
+              } else {
+                  document.documentElement.classList.remove('dark');
+              }
+              
+              updateTranslations();
+              loadView('dashboard');
+              
+              // Start the background study timer (normal timer)
+              if (timerMode === 'normal') {
+                  runStudyTimer();
+              } else {
+                  initPomodoro();
+              }
+              
+              // Make timer draggable
+              makeDraggable(document.getElementById('timer-widget'));
+          }
+  
+          function toggleLanguage() {
+              currentLang = currentLang === 'ar' ? 'en' : 'ar';
+              document.documentElement.lang = currentLang;
+              document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+              
+              // Toggle language indicator classes
+              if (currentLang === 'en') {
+                  document.querySelectorAll('.lang-en').forEach(el => el.classList.remove('hidden'));
+                  document.querySelectorAll('.lang-ar').forEach(el => el.classList.add('hidden'));
+              } else {
+                  document.querySelectorAll('.lang-en').forEach(el => el.classList.add('hidden'));
+                  document.querySelectorAll('.lang-ar').forEach(el => el.classList.remove('hidden'));
+              }
+              
+              saveToStorage();
+              updateTranslations();
+              
+              // Reload active view with the new language
+              const activeNav = document.querySelector('.nav-item.bg-primary-50, .nav-item-mobile.text-primary-600') || document.getElementById('nav-dashboard-desktop');
+              if (activeNav) {
+                  const viewId = activeNav.id.replace('nav-', '').replace('-desktop', '').replace('-mobile', '');
+                  if (viewId.startsWith('chapter-')) {
+                      renderChapter(parseInt(viewId.split('-')[1]));
+                  } else {
+                      loadView(viewId);
+                  }
+              }
+          }
+  
+          function toggleTheme() {
+              if (currentTheme === 'light') {
+                  document.documentElement.classList.add('dark');
+                  currentTheme = 'dark';
+              } else {
+                  document.documentElement.classList.remove('dark');
+                  currentTheme = 'light';
+              }
+              saveToStorage();
+          }
+  
+          function updateTranslations() {
+              document.querySelectorAll('[data-i18n]').forEach(el => {
+                  const key = el.getAttribute('data-i18n');
+                  if (translations[currentLang][key]) {
+                      el.innerText = translations[currentLang][key];
+                  }
+              });
+          }
+  
+          function t(key) { 
+              return translations[currentLang][key] || key; 
+          }
+  
+          function setActiveNav(id) {
+              // Desktop Sidebar
+              document.querySelectorAll('.nav-item').forEach(el => {
+                  el.classList.remove('bg-primary-50', 'dark:bg-indigo-950/20', 'text-primary-600', 'dark:text-primary-400', 'border-r-4', 'border-l-4', 'border-primary-500');
+              });
+              const dEl = document.getElementById(`nav-${id}-desktop`);
+              if (dEl) {
+                  dEl.classList.add('bg-primary-50', 'dark:bg-indigo-950/20', 'text-primary-600', 'dark:text-primary-400');
+                  if (currentLang === 'ar') {
+                      dEl.classList.add('border-r-4', 'border-primary-500');
+                  } else {
+                      dEl.classList.add('border-l-4', 'border-primary-500');
+                  }
+              }
+  
+              // Mobile Bottom Nav
+              document.querySelectorAll('.nav-item-mobile').forEach(el => {
+                  el.classList.remove('text-primary-600', 'dark:text-accent');
+                  el.classList.add('text-gray-400', 'dark:text-gray-500');
+              });
+              const mEl = document.getElementById(`nav-${id}-mobile`);
+              if (mEl) {
+                  mEl.classList.remove('text-gray-400', 'dark:text-gray-500');
+                  mEl.classList.add('text-primary-600', 'dark:text-accent');
+              }
+          }
+  
+          function loadView(view) {
+              const container = document.getElementById('content-container');
+              container.innerHTML = ''; 
+              setActiveNav(view);
+              
+              // Scroll back to top smoothly
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+              if (view === 'dashboard') renderDashboard(container);
+              else if (view === 'chapters') renderChaptersList(container);
+              else if (view === 'mindmap') renderMindMap(container);
+              else if (view === 'flashcards') renderFlashcards(container);
+              else if (view === 'quizzes') renderQuizMenu(container);
+              else if (view === 'exam') renderExam(container);
+          }
+  
+          // --- 7. DASHBOARD RENDERER ---
+          function renderDashboard(container) {
+              const progressPct = Math.round((userProgress.completedChapters.length / courseData.length) * 100) || 0;
+              
+              // Calculate readiness score
+              let totalQuizScore = 0;
+              let totalQuizzesTaken = 0;
+              for (let key in userProgress.quizScores) {
+                  totalQuizScore += userProgress.quizScores[key];
+                  totalQuizzesTaken += 100;
+              }
+              // Add exam score if present
+              if (userProgress.examHighScore > 0) {
+                  totalQuizScore += userProgress.examHighScore;
+                  totalQuizzesTaken += 100;
+              }
+              const readinessPct = totalQuizzesTaken > 0 ? Math.round((totalQuizScore / totalQuizzesTaken) * 100) : 0;
+  
+              // Study hours formatting
+              const hrs = Math.floor(timerSeconds / 3600);
+              const mins = Math.floor((timerSeconds % 3600) / 60);
+              const timeStr = currentLang === 'ar' ? `${hrs} ساعة و ${mins} دقيقة` : `${hrs}h ${mins}m`;
+  
+              container.innerHTML = `
+                  <div class="fade-in space-y-6">
+                      <!-- Dashboard Welcome Header -->
+                      <div class="relative overflow-hidden bg-gradient-to-br from-primary-600 to-accent text-white p-6 md:p-8 rounded-3xl shadow-lg border border-primary-500/20">
+                          <div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-16 -mt-16 filter blur-xl"></div>
+                          <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                              <div>
+                                  <span class="text-xs font-bold tracking-widest uppercase bg-white/20 px-3 py-1 rounded-full text-indigo-50 backdrop-blur-sm">${t('portal_title')}</span>
+                                  <h2 class="text-2xl md:text-3xl font-black mt-3 leading-tight" data-i18n="welcome_back">${t('welcome_back')}</h2>
+                                  <p class="text-xs md:text-sm text-indigo-100 mt-2 font-medium max-w-xl">${t('dashboard_subtitle')}</p>
+                              </div>
+                              <!-- Exam Badge Lock Indicator -->
+                              <div class="shrink-0 flex items-center gap-3 bg-white/10 p-3.5 rounded-2xl border border-white/10 backdrop-blur-md">
+                                  <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-white text-2xl shadow-inner">
+                                      <i class="fas ${userProgress.examHighScore >= 75 ? 'fa-award text-yellow-300' : 'fa-lock'}"></i>
+                                  </div>
+                                  <div>
+                                      <h4 class="text-xs font-bold">${currentLang === 'ar' ? 'الشهادة الرقمية' : 'Digital Certificate'}</h4>
+                                      <p class="text-[10px] text-indigo-200 font-semibold mt-0.5">${userProgress.examHighScore >= 75 ? (currentLang === 'ar' ? 'جاهزة للتحميل!' : 'Unlocked!') : (currentLang === 'ar' ? 'اجتز الامتحان النهائي لفتحها' : 'Pass exam to unlock')}</p>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+  
+                      <!-- Statistics Cards Grid -->
+                      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                          <!-- Study Progress Card -->
+                          <div class="bg-white dark:bg-darkcard p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden">
+                              <div class="absolute -top-10 -left-10 w-28 h-28 bg-primary-100/30 dark:bg-primary-950/15 rounded-full filter blur-xl"></div>
+                              <div class="flex justify-between items-start mb-4 relative z-10">
+                                  <div>
+                                      <h3 class="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider">${t('study_progress')}</h3>
+                                      <p class="text-3xl font-black text-slate-800 dark:text-white mt-1.5">${progressPct}%</p>
+                                  </div>
+                                  <div class="w-11 h-11 bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 rounded-xl flex items-center justify-center text-lg"><i class="fas fa-chart-line"></i></div>
+                              </div>
+                              <div class="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden relative z-10">
+                                  <div style="width:${progressPct}%" class="bg-gradient-to-r from-primary-600 to-accent h-full rounded-full transition-all duration-1000"></div>
+                              </div>
+                          </div>
+  
+                          <!-- Readiness Card -->
+                          <div class="bg-white dark:bg-darkcard p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden">
+                              <div class="absolute -top-10 -left-10 w-28 h-28 bg-emerald-100/30 dark:bg-emerald-950/10 rounded-full filter blur-xl"></div>
+                              <div class="flex justify-between items-start mb-4 relative z-10">
+                                  <div>
+                                      <h3 class="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider">${t('readiness')}</h3>
+                                      <p class="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1.5">${readinessPct}%</p>
+                                  </div>
+                                  <div class="w-11 h-11 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center justify-center text-lg"><i class="fas fa-graduation-cap"></i></div>
+                              </div>
+                              <div class="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden relative z-10">
+                                  <div style="width:${readinessPct}%" class="bg-emerald-500 h-full rounded-full transition-all duration-1000"></div>
+                              </div>
+                          </div>
+  
+                          <!-- Study Time Card -->
+                          <div class="bg-white dark:bg-darkcard p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden">
+                              <div class="absolute -top-10 -left-10 w-28 h-28 bg-amber-100/30 dark:bg-amber-950/10 rounded-full filter blur-xl"></div>
+                              <div class="flex justify-between items-start mb-4 relative z-10">
+                                  <div>
+                                      <h3 class="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider">${t('study_time')}</h3>
+                                      <p class="text-xl md:text-2xl font-black text-amber-600 dark:text-amber-400 mt-2.5">${timeStr}</p>
+                                  </div>
+                                  <div class="w-11 h-11 bg-amber-50 dark:bg-amber-950/30 text-amber-500 dark:text-amber-400 rounded-xl flex items-center justify-center text-lg"><i class="fas fa-clock"></i></div>
+                              </div>
+                              <div class="flex justify-between items-center text-[10px] text-gray-400 font-bold border-t dark:border-gray-800 pt-2 relative z-10">
+                                  <span>${t('timer_title')}</span>
+                                  <span class="flex items-center gap-1"><i class="fas fa-circle text-emerald-500 text-[6px] animate-ping"></i> Active</span>
+                              </div>
+                          </div>
+                      </div>
+  
+                      <!-- Performance Stats / High Scores & Reset Progress -->
+                      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <!-- High Scores Panel -->
+                          <div class="bg-white dark:bg-darkcard p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 md:col-span-2">
+                              <h3 class="text-base font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2"><i class="fas fa-medal text-primary-500"></i> ${t('high_scores')}</h3>
+                              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                  <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 text-center shadow-inner">
+                                      <span class="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase block mb-1">MCQ</span>
+                                      <span class="text-xl font-black text-primary-650">${userProgress.quizScores.mcq || 0}%</span>
+                                  </div>
+                                  <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 text-center shadow-inner">
+                                      <span class="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase block mb-1">True / False</span>
+                                      <span class="text-xl font-black text-emerald-600">${userProgress.quizScores.tf || 0}%</span>
+                                  </div>
+                                  <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 text-center shadow-inner">
+                                      <span class="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase block mb-1">Fill Blank</span>
+                                      <span class="text-xl font-black text-amber-600">${userProgress.quizScores.fill || 0}%</span>
+                                  </div>
+                                  <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 text-center shadow-inner">
+                                      <span class="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase block mb-1">Matching</span>
+                                      <span class="text-xl font-black text-purple-600">${userProgress.quizScores.match || 0}%</span>
+                                  </div>
+                              </div>
+                          </div>
+                          
+                          <!-- Reset & Setting Card -->
+                          <div class="bg-white dark:bg-darkcard p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col justify-between items-center text-center">
+                              <div>
+                                  <h3 class="text-base font-bold text-slate-800 dark:text-white mb-2"><i class="fas fa-sliders-h text-primary-500"></i> ${currentLang === 'ar' ? 'إدارة البيانات' : 'Data Management'}</h3>
+                                  <p class="text-xs text-gray-400">${currentLang === 'ar' ? 'يمكنك تصفير درجاتك وفصولك المقروءة والبدء من جديد.' : 'You can reset all your scores and read chapters and start over.'}</p>
+                              </div>
+                              <button onclick="resetAllPortalProgress()" class="w-full mt-4 py-3 bg-red-50 hover:bg-red-150 text-red-600 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-950/45 rounded-2xl text-xs font-bold border border-red-100 dark:border-red-900/35 transition-colors active:scale-[0.98]">
+                                  <i class="fas fa-trash-alt rtl:ml-1.5 ltr:mr-1.5"></i> ${t('reset_all')}
+                              </button>
+                          </div>
+                      </div>
+  
+                      <!-- Chapters Grid Header -->
+                      <div class="flex justify-between items-center pt-4">
+                          <h2 class="text-xl font-bold flex items-center gap-2 text-slate-800 dark:text-white"><i class="fas fa-book text-primary-500"></i> ${t('chapters_count')}</h2>
+                      </div>
+                      
+                      <!-- Chapter Cards Grid -->
+                      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                          ${courseData.map(ch => {
+                              const isCompleted = userProgress.completedChapters.includes(ch.id);
+                              return `
+                                  <div onclick="renderChapter(${ch.id})" class="cursor-pointer bg-white dark:bg-darkcard p-6 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 dark:border-gray-800 flex flex-col justify-between active:scale-[0.98] group relative overflow-hidden">
+                                      ${isCompleted ? `
+                                          <div class="absolute top-0 ltr:right-0 rtl:left-0 bg-emerald-500 text-white text-[9px] px-3 py-1 rounded-bl-2xl rounded-tr-2xl font-bold uppercase tracking-wider shadow-sm">
+                                              <i class="fas fa-check"></i> ${t('completed')}
+                                          </div>
+                                      ` : ''}
+                                      <div>
+                                          <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-primary-600 dark:text-primary-400 flex items-center justify-center mb-5 group-hover:bg-primary-600 group-hover:text-white transition-colors duration-300"><i class="fas fa-book-reader text-lg"></i></div>
+                                          <h3 class="font-bold text-base text-slate-800 dark:text-white mb-2 leading-tight">${ch[currentLang].title}</h3>
+                                          <p class="text-xs text-gray-400 dark:text-gray-500 line-clamp-2 leading-relaxed font-medium">${ch[currentLang].overview}</p>
+                                      </div>
+                                      <div class="mt-5 pt-3.5 border-t border-gray-50 dark:border-gray-800/60 flex justify-between items-center text-[10px] font-bold text-primary-600 dark:text-primary-400">
+                                          <span>${currentLang === 'ar' ? 'ابدأ القراءة' : 'Read Chapter'}</span>
+                                          <i class="fas fa-arrow-right rtl:rotate-180 transform group-hover:translate-x-1.5 transition-transform"></i>
+                                      </div>
+                                  </div>
+                              `;
+                          }).join('')}
+                      </div>
+                  </div>
+              `;
+          }
+  
+          function resetAllPortalProgress() {
+              if (confirm(currentLang === 'ar' ? 'هل أنت متأكد من رغبتك في مسح كل الإنجازات والتقدم الدراسي؟' : 'Are you sure you want to clear all achievements and study progress?')) {
+                  userProgress = {
+                      completedChapters: [],
+                      quizScores: { mcq: 0, tf: 0, fill: 0, match: 0 },
+                      examHighScore: 0
+                  };
+                  timerSeconds = 0;
+                  saveToStorage();
+                  loadView('dashboard');
+              }
+          }
+  
+          // --- 8. CHAPTER LIST RENDERER ---
+          function renderChaptersList(container) {
+              container.innerHTML = `
+                  <div class="space-y-5 fade-in max-w-4xl mx-auto w-full">
+                      ${courseData.map(ch => {
+                          const isCompleted = userProgress.completedChapters.includes(ch.id);
+                          return `
+                              <div class="bg-white dark:bg-darkcard p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800/80 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow">
+                                  <div class="space-y-2.5">
+                                      <div class="flex items-center gap-2.5">
+                                          <h2 class="text-lg md:text-xl font-bold text-slate-800 dark:text-white leading-tight">${ch[currentLang].title}</h2>
+                                          ${isCompleted ? `
+                                              <span class="bg-emerald-50 dark:bg-emerald-950/25 text-emerald-600 dark:text-emerald-400 text-[9px] font-bold px-2.5 py-1 rounded-lg border border-emerald-100 dark:border-emerald-900/20 flex items-center gap-1 shrink-0">
+                                                  <i class="fas fa-check-circle"></i> ${t('completed')}
+                                              </span>
+                                          ` : ''}
+                                      </div>
+                                      <p class="text-slate-500 dark:text-gray-400 leading-relaxed text-xs md:text-sm max-w-2xl font-medium">${ch[currentLang].overview}</p>
+                                  </div>
+                                  <button onclick="renderChapter(${ch.id})" class="bg-primary-50 text-primary-600 hover:bg-primary-600 hover:text-white dark:bg-indigo-950/30 dark:text-primary-400 dark:hover:bg-primary-600 dark:hover:text-white px-6 py-3.5 rounded-2xl font-bold text-sm transition-all shadow-sm shrink-0 active:scale-95 text-center flex items-center justify-center gap-2">
+                                      <i class="fas fa-book-open"></i>
+                                      <span>${currentLang === 'ar' ? 'اقرأ الفصل' : 'Read Chapter'}</span>
+                                  </button>
+                              </div>
+                          `;
+                      }).join('')}
+                  </div>
+              `;
+          }
+  
+          function renderChapter(id) {
+              setActiveNav('chapters');
+              const ch = courseData.find(c => c.id === id);
+              const container = document.getElementById('content-container');
+              
+              // Mark chapter as read
+              if (!userProgress.completedChapters.includes(id)) {
+                  userProgress.completedChapters.push(id);
+                  saveToStorage();
+              }
+  
+              container.innerHTML = `
+                  <div class="fade-in bg-white dark:bg-darkcard p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800/80 relative overflow-hidden">
+                      <div class="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-r from-primary-600 to-accent"></div>
+                      
+                      <button onclick="loadView('chapters')" class="mb-6 flex items-center text-xs font-bold text-gray-500 hover:text-primary-650 transition bg-slate-50 dark:bg-gray-800 px-4 py-2.5 rounded-xl border dark:border-gray-700 w-fit gap-2">
+                          <i class="fas fa-arrow-right rtl:hidden"></i>
+                          <i class="fas fa-arrow-left ltr:hidden"></i>
+                          <span>${t('back')}</span>
+                      </button>
+                      
+                      <h1 class="text-2xl md:text-3xl font-black text-slate-800 dark:text-white mb-8 pb-4 border-b border-gray-150 dark:border-gray-800 leading-tight">${ch[currentLang].title}</h1>
+                      
+                      <!-- Chapter Main Content -->
+                      <div class="prose dark:prose-invert max-w-none text-slate-700 dark:text-gray-200 text-sm md:text-base leading-relaxed mb-10">
+                          ${ch[currentLang].content}
+                      </div>
+  
+                      <!-- Highlight Notes and Key Terms Grid -->
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-10 border-t dark:border-gray-850 pt-8">
+                          <div class="bg-amber-50/40 dark:bg-amber-950/10 p-5 md:p-6 rounded-2xl border border-amber-100/50 dark:border-amber-900/30 flex flex-col justify-between">
+                              <div>
+                                  <h4 class="font-bold text-amber-700 dark:text-amber-500 mb-3 flex items-center gap-2">
+                                      <i class="fas fa-lightbulb text-lg"></i> 
+                                      <span>${t('important_note')}</span>
+                                  </h4>
+                                  <p class="text-xs md:text-sm dark:text-gray-300 leading-relaxed font-semibold">${ch[currentLang].notes}</p>
+                              </div>
+                          </div>
+                          <div class="bg-slate-50/50 dark:bg-slate-900/40 p-5 md:p-6 rounded-2xl border border-gray-150 dark:border-gray-800/60">
+                              <h4 class="font-bold text-slate-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+                                  <i class="fas fa-key text-primary-500"></i> 
+                                  <span>${t('key_terms')}</span>
+                              </h4>
+                              <div class="flex flex-wrap gap-2">
+                                  ${ch[currentLang].keyTerms.map(term => `<span class="px-3 py-1.5 bg-white dark:bg-darkcard rounded-xl text-xs shadow-sm font-semibold text-primary-600 dark:text-primary-400 border border-gray-100 dark:border-gray-800/80">${term}</span>`).join('')}
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              `;
+          }
+  
+          // --- 9. INTERACTIVE FLOW MIND MAP ---
+          function renderMindMap(container) {
+              container.innerHTML = `
+                  <div class="fade-in bg-white dark:bg-darkcard p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800/80 w-full mb-6 relative overflow-hidden">
+                      <div class="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-r from-primary-600 to-accent"></div>
+                      
+                      <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+                          <div>
+                              <h2 class="text-2xl font-black text-slate-800 dark:text-white flex items-center gap-2">
+                                  <i class="fas fa-project-diagram text-primary-500"></i> 
+                                  <span>${currentLang === 'ar' ? 'الخريطة الذهنية التفاعلية' : 'Interactive Mind Map'}</span>
+                              </h2>
+                              <p class="text-xs text-gray-400 mt-1 font-semibold">${currentLang === 'ar' ? 'مخطط شجري تفاعلي لتسهيل فهم وتصفح فصول ومفاهيم المادة' : 'Interactive tree chart designed to map chapters and key terms easily'}</p>
+                          </div>
+                          <div class="flex items-center gap-2">
+                              <button onclick="zoomMindMap(1.1)" class="w-9 h-9 bg-slate-50 dark:bg-gray-800 text-slate-700 dark:text-gray-300 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-gray-750 transition-colors border dark:border-gray-700" title="Zoom In"><i class="fas fa-plus text-xs"></i></button>
+                              <button onclick="zoomMindMap(0.9)" class="w-9 h-9 bg-slate-50 dark:bg-gray-800 text-slate-700 dark:text-gray-300 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-gray-750 transition-colors border dark:border-gray-700" title="Zoom Out"><i class="fas fa-minus text-xs"></i></button>
+                              <button onclick="resetMindMapTransform()" class="w-9 h-9 bg-slate-50 dark:bg-gray-800 text-slate-700 dark:text-gray-300 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-gray-750 transition-colors border dark:border-gray-700" title="Reset View"><i class="fas fa-expand text-xs"></i></button>
+                              <button onclick="drawMindMapLines()" class="w-9 h-9 bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-accent rounded-xl flex items-center justify-center hover:bg-primary-100 transition-colors border dark:border-gray-800" title="Refresh Lines"><i class="fas fa-arrows-spin text-xs"></i></button>
+                          </div>
+                      </div>
+                      
+                      <div class="bg-blue-50/40 dark:bg-blue-950/10 text-blue-800 dark:text-blue-300 p-3.5 rounded-2xl mb-6 text-xs md:text-sm font-semibold flex items-center gap-3 border border-blue-100/50 dark:border-blue-900/35">
+                          <i class="fas fa-mouse-pointer text-base animate-bounce"></i>
+                          <span>${currentLang === 'ar' ? 'اسحب للتنقل. انقر على أي فصل لفتحه وقراءته مباشرة.' : 'Drag to pan. Scroll to zoom. Click on a chapter block to open it.'}</span>
+                      </div>
+                      
+                      <!-- Mind Map Workspace Canvas -->
+                      <div class="w-full h-[60vh] md:h-[65vh] bg-slate-50 dark:bg-slate-950/80 rounded-2xl overflow-hidden relative border border-gray-150 dark:border-gray-800 shadow-inner" id="mindmap-container">
+                          <div class="absolute inset-0 grab-scroll flex items-center justify-center origin-center select-none" id="mindmap-content" style="transform: scale(1) translate(0px, 0px);">
+                              
+                              <!-- Connecting SVG lines -->
+                              <svg id="lines-svg" class="absolute top-0 left-0 w-full h-full pointer-events-none z-0"></svg>
+                              
+                              <!-- Tree Nodes Container -->
+                              <div class="flex items-center gap-20 md:gap-28 p-24" id="mm-tree-wrapper">
+                                  
+                                  <!-- Core Root Node -->
+                                  <div id="mm-root" class="z-10 bg-gradient-to-br from-primary-600 to-accent text-white px-7 py-5.5 rounded-3xl shadow-xl border-4 border-white dark:border-gray-800 text-center max-w-[200px]">
+                                      <div class="w-14 h-14 mx-auto bg-white/20 rounded-2xl flex items-center justify-center mb-3 shadow-inner"><i class="fas fa-university text-2xl"></i></div>
+                                      <h3 class="font-black text-sm md:text-base">${currentLang === 'ar' ? 'مساق الحكومة الإلكترونية' : 'E-Gov Course'}</h3>
+                                  </div>
+  
+                                  <!-- Secondary Chapter Groups -->
+                                  <div class="flex flex-col gap-10 md:gap-14 z-10" id="mm-chapters">
+                                      ${courseData.map((ch, idx) => {
+                                          const titleParts = ch[currentLang].title.split(':');
+                                          const chNum = titleParts[0];
+                                          const chName = titleParts[1] ? titleParts[1].trim() : '';
+                                          const subTerms = ch[currentLang].keyTerms.slice(0, 3); // top 3 terms
+                                          
+                                          return `
+                                              <div class="flex items-center gap-12 md:gap-20 mm-chapter-group">
+                                                  <!-- Chapter Block -->
+                                                  <div onclick="renderChapter(${ch.id})" class="mm-chapter bg-white dark:bg-darkcard text-slate-800 dark:text-white font-bold px-5 py-4 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800 cursor-pointer hover:scale-[1.07] hover:border-primary-500 hover:shadow-lg transition-all duration-300 text-center min-w-[150px] max-w-[180px] z-10" id="ch-${idx}">
+                                                      <span class="text-[10px] text-primary-500 font-extrabold uppercase block mb-1">${chNum}</span>
+                                                      <span class="text-xs leading-tight block">${chName}</span>
+                                                  </div>
+                                                  
+                                                  <!-- Subtopics / Terms Leaves -->
+                                                  <div class="flex flex-col gap-3 mm-subtopics z-10">
+                                                      ${subTerms.map((sub, sidx) => `
+                                                          <div onclick="showTermExplanation('${sub.replace(/'/g, "\\'")}')" class="mm-sub cursor-pointer bg-white dark:bg-gray-800 text-gray-650 dark:text-gray-300 px-4 py-2.5 rounded-xl shadow-sm border border-gray-150 dark:border-gray-800 text-xs font-semibold hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors whitespace-nowrap" id="sub-${idx}-${sidx}">
+                                                              <i class="fas fa-hashtag text-[9px] text-primary-400 rtl:ml-1 ltr:mr-1"></i> ${sub}
+                                                          </div>
+                                                      `).join('')}
+                                                  </div>
+                                              </div>
+                                          `;
+                                      }).join('')}
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              `;
+  
+              // Draw SVG connection paths
+              setTimeout(() => {
+                  resetMindMapTransform();
+                  drawMindMapLines();
+                  setupMindMapNavigation();
+              }, 100);
+          }
+  
+          // Zoom & Pan Mindmap State Variables
+          let mindmapScale = 1;
+          let mindmapTranslate = { x: 0, y: 0 };
+  
+          function zoomMindMap(factor) {
+              mindmapScale = Math.max(0.5, Math.min(2, mindmapScale * factor));
+              applyMindMapTransform();
+          }
+  
+          function resetMindMapTransform() {
+              const container = document.getElementById('mindmap-container');
+              const content = document.getElementById('mindmap-content');
+              if (!container || !content) return;
+              
+              mindmapScale = window.innerWidth < 768 ? 0.75 : 1;
+              mindmapTranslate = { x: 0, y: 0 };
+              applyMindMapTransform();
+          }
+  
+          function applyMindMapTransform() {
+              const content = document.getElementById('mindmap-content');
+              if (content) {
+                  content.style.transform = `scale(${mindmapScale}) translate(${mindmapTranslate.x}px, ${mindmapTranslate.y}px)`;
+                  drawMindMapLines();
+              }
+          }
+  
+          function drawMindMapLines() {
+              const svg = document.getElementById('lines-svg');
+              const root = document.getElementById('mm-root');
+              const chapters = document.querySelectorAll('.mm-chapter');
+              const container = document.getElementById('mindmap-content');
+              const treeWrapper = document.getElementById('mm-tree-wrapper');
+              
+              if (!svg || !root || chapters.length === 0 || !container || !treeWrapper) return;
+  
+              // Align SVG viewport exactly to layout container
+              svg.style.width = treeWrapper.scrollWidth + 200 + 'px';
+              svg.style.height = treeWrapper.scrollHeight + 200 + 'px';
+              
+              let linesHTML = '';
+              const isRTL = document.documentElement.dir === 'rtl';
+  
+              // Get absolute coordinates relative to the treeWrapper wrapper
+              const getAnchor = (el, position) => {
+                  const elRect = el.getBoundingClientRect();
+                  const containerRect = treeWrapper.getBoundingClientRect();
+                  
+                  let x = elRect.left - containerRect.left;
+                  if (position === 'left') {
+                      x += 0;
+                  } else if (position === 'right') {
+                      x += elRect.width;
+                  } else {
+                      x += elRect.width / 2;
+                  }
+  
+                  const y = elRect.top - containerRect.top + elRect.height / 2;
+                  return { x, y };
+              };
+  
+              // Create bezier paths
+              const drawPath = (start, end, strokeColor, strokeWidth) => {
+                  const controlOffset = Math.max(Math.abs(end.x - start.x) / 1.8, 32);
+                  const cp1x = isRTL ? start.x - controlOffset : start.x + controlOffset;
+                  const cp2x = isRTL ? end.x + controlOffset : end.x - controlOffset;
+                  
+                  return `<path d="M ${start.x} ${start.y} C ${cp1x} ${start.y}, ${cp2x} ${end.y}, ${end.x} ${end.y}" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-dasharray="6,4" class="opacity-45" />`;
+              };
+  
+              const isDark = document.documentElement.classList.contains('dark');
+              const lineRootColor = isDark ? '#818cf8' : '#4f46e5';
+              const lineSubColor = isDark ? '#4b5563' : '#d1d5db';
+  
+              const rootEdge = isRTL ? 'left' : 'right';
+              const chEdgeLeft = isRTL ? 'right' : 'left';
+              const chEdgeRight = isRTL ? 'left' : 'right';
+              const subEdge = isRTL ? 'right' : 'left';
+  
+              const rootPos = getAnchor(root, rootEdge);
+  
+              chapters.forEach((ch, idx) => {
+                  const chPos = getAnchor(ch, chEdgeLeft);
+                  // Draw line from Root to Chapter
+                  linesHTML += drawPath(rootPos, chPos, lineRootColor, 3.5);
+  
+                  const chOutPos = getAnchor(ch, chEdgeRight);
+                  const subNodes = ch.parentElement.querySelectorAll('.mm-sub');
+                  subNodes.forEach(sub => {
+                      const subPos = getAnchor(sub, subEdge);
+                      // Draw line from Chapter to Subtopic Leaf
+                      linesHTML += drawPath(chOutPos, subPos, lineSubColor, 2);
+                  });
+              });
+  
+              svg.innerHTML = linesHTML;
+          }
+  
+          function setupMindMapNavigation() {
+              const container = document.getElementById('mindmap-container');
+              const content = document.getElementById('mindmap-content');
+              if (!container || !content) return;
+  
+              let isDragging = false;
+              let startX, startY;
+  
+              // Mouse and Touch Event Handlers for Panning
+              const startDrag = (e) => {
+                  // Ignore clicks on buttons/links
+                  if (e.target.closest('button') || e.target.closest('.mm-chapter')) return;
+                  
+                  isDragging = true;
+                  container.classList.replace('cursor-grab', 'cursor-grabbing');
+                  
+                  const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                  const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                  
+                  startX = clientX - mindmapTranslate.x;
+                  startY = clientY - mindmapTranslate.y;
+              };
+  
+              const doDrag = (e) => {
+                  if (!isDragging) return;
+                  e.preventDefault();
+                  
+                  const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                  const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                  
+                  mindmapTranslate.x = clientX - startX;
+                  mindmapTranslate.y = clientY - startY;
+                  applyMindMapTransform();
+              };
+  
+              const endDrag = () => {
+                  isDragging = false;
+                  container.classList.replace('cursor-grabbing', 'cursor-grab');
+              };
+  
+              // Attach listeners
+              container.addEventListener('mousedown', startDrag);
+              container.addEventListener('mousemove', doDrag);
+              window.addEventListener('mouseup', endDrag);
+  
+              container.addEventListener('touchstart', startDrag);
+              container.addEventListener('touchmove', doDrag);
+              window.addEventListener('touchend', endDrag);
+  
+              // Wheel zoom support
+              container.addEventListener('wheel', (e) => {
+                  e.preventDefault();
+                  const delta = e.deltaY < 0 ? 1.05 : 0.95;
+                  zoomMindMap(delta);
+              });
+          }
+  
+          window.showTermExplanation = (term) => {
+              const isAr = currentLang === 'ar';
+              const card = flashcardsData.find(c => (isAr ? c.term_ar : c.term_en) === term || c.term_ar.includes(term) || c.term_en.includes(term));
+              
+              const existing = document.getElementById('term-toast');
+              if (existing) existing.remove();
+              
+              const title = card ? (isAr ? card.term_ar : card.term_en) : term;
+              const desc = card ? (isAr ? card.def_ar : card.def_en) : (isAr ? 'اضغط على الفصل لقراءة المزيد من المعلومات.' : 'Click on the chapter to read more details.');
+              
+              const toast = document.createElement('div');
+              toast.id = 'term-toast';
+              toast.className = 'fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[100] bg-white dark:bg-darkcard p-4 rounded-2xl shadow-2xl border border-primary-500/30 flex items-start gap-4 w-11/12 max-w-sm animate-[fadeIn_0.3s_ease-out]';
+              toast.innerHTML = `
+                  <div class="text-primary-500 mt-1"><i class="fas fa-lightbulb text-2xl"></i></div>
+                  <div class="flex-1">
+                      <h4 class="font-bold text-slate-800 dark:text-white text-sm leading-tight">${title}</h4>
+                      <p class="text-xs text-slate-600 dark:text-gray-300 mt-1.5 leading-relaxed font-semibold">${desc}</p>
+                  </div>
+                  <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors rtl:ml-2 ltr:mr-2"><i class="fas fa-times"></i></button>
+              `;
+              document.body.appendChild(toast);
+              
+              setTimeout(() => {
+                  if (document.getElementById('term-toast')) {
+                      document.getElementById('term-toast').remove();
+                  }
+              }, 6000);
+          };
+  
+          // --- 10. FLUID 3D FLASHCARDS ---
+          function renderFlashcards(container) {
+              let currentIndex = 0;
+              
+              const renderCard = () => {
+                  const card = flashcardsData[currentIndex];
+                  const cardContainer = document.getElementById('flashcard-deck');
+                  
+                  cardContainer.innerHTML = `
+                      <div class="w-full max-w-sm md:max-w-md h-96 perspective-1000 mx-auto cursor-pointer flip-card" onclick="this.classList.toggle('flipped')" ontouchstart="handleFlashcardTouchStart(event)" ontouchend="handleFlashcardTouchEnd(event)">
+                          <div class="flip-card-inner">
+                              <!-- Card Front -->
+                              <div class="flip-card-front bg-white dark:bg-darkcard border border-gray-100 dark:border-gray-800 rounded-3xl flex flex-col items-center justify-between p-8 shadow-xl shadow-indigo-100/35 dark:shadow-none relative overflow-hidden">
+                                  <div class="absolute -top-16 -right-16 w-36 h-36 bg-primary-50 dark:bg-primary-950/20 rounded-full filter blur-xl"></div>
+                                  <span class="text-[9px] uppercase tracking-widest text-primary-500 font-extrabold bg-primary-50 dark:bg-primary-950/30 px-3 py-1 rounded-full relative z-10">${currentLang === 'ar' ? 'المصطلح' : 'TERM'}</span>
+                                  <div class="overflow-y-auto max-h-48 w-full px-2 scrollbar-hide z-10 flex items-center justify-center">
+                                      <h2 class="text-xl md:text-2xl font-black text-slate-800 dark:text-white leading-tight px-4 text-center">${currentLang === 'ar' ? card.term_ar : card.term_en}</h2>
+                                  </div>
+                                  <div class="flex flex-col items-center gap-1.5 text-gray-400 relative z-10 mt-2">
+                                      <i class="fas fa-rotate text-sm animate-pulse-slow"></i>
+                                      <span class="text-[9px] font-bold uppercase tracking-wider">${currentLang === 'ar' ? 'انقر لعرض التعريف' : 'Tap to reveal definition'}</span>
+                                  </div>
+                              </div>
+                              <!-- Card Back -->
+                              <div class="flip-card-back bg-gradient-to-br from-primary-600 to-accent text-white rounded-3xl flex flex-col justify-between p-8 shadow-xl relative overflow-hidden">
+                                  <div class="absolute -bottom-16 -left-16 w-36 h-36 bg-white/10 rounded-full filter blur-xl"></div>
+                                  <span class="text-[9px] uppercase tracking-widest text-white/40 font-extrabold bg-white/10 px-3 py-1 rounded-full relative z-10 w-fit mx-auto">${currentLang === 'ar' ? 'التعريف' : 'DEFINITION'}</span>
+                                  <div class="overflow-y-auto max-h-56 w-full px-2 scrollbar-hide z-10">
+                                      <p class="text-sm md:text-base leading-relaxed font-semibold text-center">${currentLang === 'ar' ? card.def_ar : card.def_en}</p>
+                                  </div>
+                                  <div class="text-[9px] text-white/50 font-bold uppercase relative z-10 mt-2">
+                                      <i class="fas fa-undo-alt"></i> ${currentLang === 'ar' ? 'انقر للعودة' : 'Tap to turn back'}
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                      
+                      <!-- Navigator & Progress bar -->
+                      <div class="mt-8 flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
+                          <div class="w-full bg-gray-200 dark:bg-gray-800 h-2 rounded-full overflow-hidden">
+                              <div class="bg-gradient-to-r from-primary-650 to-accent h-full transition-all duration-300" style="width: ${((currentIndex + 1) / flashcardsData.length) * 100}%"></div>
+                          </div>
+                          <div class="flex items-center justify-between w-full mt-2">
+                              <button onclick="navigateCard(-1)" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-150 dark:border-gray-700 shadow-md text-primary-600 dark:text-primary-400 rounded-xl hover:bg-slate-50 transition-all active:scale-95 ${currentIndex === 0 ? 'opacity-35 cursor-not-allowed shadow-none' : ''}">
+                                  <i class="fas fa-chevron-right text-base rtl:hidden"></i>
+                                  <i class="fas fa-chevron-left text-base ltr:hidden"></i>
+                              </button>
+                              <span class="py-2 text-slate-500 font-extrabold text-sm tracking-widest">${currentIndex + 1} / ${flashcardsData.length}</span>
+                              <button onclick="navigateCard(1)" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-150 dark:border-gray-700 shadow-md text-primary-600 dark:text-primary-400 rounded-xl hover:bg-slate-50 transition-all active:scale-95 ${currentIndex === flashcardsData.length - 1 ? 'opacity-35 cursor-not-allowed shadow-none' : ''}">
+                                  <i class="fas fa-chevron-left text-base rtl:hidden"></i>
+                                  <i class="fas fa-chevron-right text-base ltr:hidden"></i>
+                              </button>
+                          </div>
+                      </div>
+                  `;
+              };
+  
+              window.navigateCard = (dir) => {
+                  if (currentIndex + dir >= 0 && currentIndex + dir < flashcardsData.length) {
+                      currentIndex += dir;
+                      renderCard();
+                  }
+              };
+              
+              let touchstartX = 0;
+              window.handleFlashcardTouchStart = (e) => {
+                  touchstartX = e.changedTouches[0].screenX;
+              };
+              window.handleFlashcardTouchEnd = (e) => {
+                  const touchendX = e.changedTouches[0].screenX;
+                  if (touchendX < touchstartX - 50) navigateCard(currentLang === 'ar' ? -1 : 1);
+                  if (touchendX > touchstartX + 50) navigateCard(currentLang === 'ar' ? 1 : -1);
+              };
+  
+              container.innerHTML = `
+                  <div class="fade-in max-w-2xl mx-auto py-4 md:py-8 flex flex-col items-center">
+                      <div class="w-14 h-14 bg-indigo-50 dark:bg-gray-800 text-primary-600 dark:text-primary-400 rounded-2xl flex items-center justify-center mb-4"><i class="fas fa-layer-group text-xl"></i></div>
+                      <h2 class="text-2xl font-black text-slate-800 dark:text-white mb-2">${t('flashcards')}</h2>
+                      <p class="text-xs text-gray-400 mb-8 font-semibold">${currentLang === 'ar' ? 'بطاقات للمراجعة الفعالة لمصطلحات ومفاهيم المادة بشكل سريع' : 'A card-based revision deck covering all primary terminology'}</p>
+                      
+                      <!-- Flashcard Anchor -->
+                      <div id="flashcard-deck" class="w-full"></div>
+                  </div>
+              `;
+              
+              renderCard();
+          }
+  
+          // --- 11. DYNAMIC QUIZ SYSTEM ---
+          function renderQuizMenu(container) {
+              container.innerHTML = `
+                  <div class="max-w-4xl mx-auto py-4 md:py-8 fade-in">
+                      <div class="text-center mb-10">
+                          <div class="w-14 h-14 bg-indigo-50 dark:bg-gray-800 text-primary-600 dark:text-primary-400 rounded-2xl flex items-center justify-center mb-4 mx-auto"><i class="fas fa-tasks text-xl"></i></div>
+                          <h2 class="text-2xl font-black text-slate-800 dark:text-white mb-2">${t('question_bank')}</h2>
+                          <p class="text-xs text-gray-400 font-semibold">${currentLang === 'ar' ? 'اختر نمط التدريب المناسب لتقييم مستواك المعرفي' : 'Select your preferred training format to evaluate your level'}</p>
+                      </div>
+                      
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                          
+                          <!-- MCQ Card -->
+                          <div onclick="startQuiz('mcq')" class="cursor-pointer bg-white dark:bg-darkcard p-6 md:p-8 rounded-3xl border border-gray-150 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-[0.98] group flex gap-5 items-center">
+                              <div class="w-16 h-16 bg-blue-50 dark:bg-blue-950/30 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 text-xl font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors"><i class="fas fa-list-ol"></i></div>
+                              <div>
+                                  <h3 class="font-bold text-base md:text-lg text-slate-800 dark:text-white leading-tight">${currentLang === 'ar' ? 'اختيار من متعدد' : 'Multiple Choice'}</h3>
+                                  <p class="text-xs text-gray-400 mt-1.5 font-semibold">${quizData.mcq.length} ${t('questions')}</p>
+                              </div>
+                          </div>
+  
+                          <!-- True/False Card -->
+                          <div onclick="startQuiz('tf')" class="cursor-pointer bg-white dark:bg-darkcard p-6 md:p-8 rounded-3xl border border-gray-150 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-[0.98] group flex gap-5 items-center">
+                              <div class="w-16 h-16 bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 text-xl font-bold group-hover:bg-emerald-500 group-hover:text-white transition-colors"><i class="fas fa-check-double"></i></div>
+                              <div>
+                                  <h3 class="font-bold text-base md:text-lg text-slate-800 dark:text-white leading-tight">${currentLang === 'ar' ? 'صح أم خطأ' : 'True or False'}</h3>
+                                  <p class="text-xs text-gray-400 mt-1.5 font-semibold">${quizData.tf.length} ${t('questions')}</p>
+                              </div>
+                          </div>
+  
+                          <!-- Fill in Blanks Card -->
+                          <div onclick="startQuiz('fill')" class="cursor-pointer bg-white dark:bg-darkcard p-6 md:p-8 rounded-3xl border border-gray-150 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-[0.98] group flex gap-5 items-center">
+                              <div class="w-16 h-16 bg-amber-50 dark:bg-amber-950/30 rounded-2xl flex items-center justify-center text-amber-500 dark:text-amber-400 shrink-0 text-xl font-bold group-hover:bg-amber-500 group-hover:text-white transition-colors"><i class="fas fa-keyboard"></i></div>
+                              <div>
+                                  <h3 class="font-bold text-base md:text-lg text-slate-800 dark:text-white leading-tight">${currentLang === 'ar' ? 'املأ الفراغ' : 'Fill in the Blank'}</h3>
+                                  <p class="text-xs text-gray-400 mt-1.5 font-semibold">${quizData.fill.length} ${t('questions')}</p>
+                              </div>
+                          </div>
+  
+                          <!-- Matching/Tapping Matching -->
+                          <div onclick="startQuiz('match')" class="cursor-pointer bg-white dark:bg-darkcard p-6 md:p-8 rounded-3xl border border-gray-150 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-[0.98] group flex gap-5 items-center">
+                              <div class="w-16 h-16 bg-purple-50 dark:bg-purple-950/30 rounded-2xl flex items-center justify-center text-purple-650 dark:text-purple-400 shrink-0 text-xl font-bold group-hover:bg-purple-600 group-hover:text-white transition-colors"><i class="fas fa-arrows-spin"></i></div>
+                              <div>
+                                  <h3 class="font-bold text-base md:text-lg text-slate-800 dark:text-white leading-tight">${currentLang === 'ar' ? 'مطابقة المفاهيم' : 'Tapping Matching'}</h3>
+                                  <p class="text-xs text-gray-400 mt-1.5 font-semibold">${quizData.match.length} ${currentLang === 'ar' ? 'مجموعات' : 'Groups'}</p>
+                              </div>
+                          </div>
+  
+                      </div>
+                  </div>
+              `;
+          }
+  
+          function startQuiz(type) {
+              currentQuizType = type;
+              // Get random questions
+              quizQuestions = [...quizData[type]].sort(() => 0.5 - Math.random()).slice(0, 10);
+              currentQIndex = 0;
+              score = 0;
+              
+              // Match Quiz Reset
+              matchedPairs = {};
+              matchSelectedLeftIdx = null;
+              matchSelectedRightIdx = null;
+  
+              renderQuizInterface();
+          }
+  
+          function renderQuizInterface() {
+              const container = document.getElementById('content-container');
+              
+              // Quiz Complete View
+              if (currentQIndex >= quizQuestions.length) {
+                  const scorePct = Math.round((score / quizQuestions.length) * 100);
+                  
+                  // Save highscore for this quiz type
+                  if (currentQuizType !== 'mixed') {
+                      userProgress.quizScores[currentQuizType] = Math.max(userProgress.quizScores[currentQuizType] || 0, scorePct);
+                      saveToStorage();
+                  }
+                  
+                  // Trigger success confetti if score is high
+                  if (scorePct >= 70) {
+                      triggerConfetti();
+                  }
+  
+                  container.innerHTML = `
+                      <div class="fade-in bg-white dark:bg-darkcard p-8 md:p-12 rounded-3xl shadow-xl text-center max-w-xl mx-auto border border-gray-150 dark:border-gray-800 relative overflow-hidden">
+                          <div class="absolute -top-16 -right-16 w-36 h-36 bg-primary-100/30 dark:bg-primary-950/15 rounded-full filter blur-xl"></div>
+                          
+                          <div class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-6 shadow-md ${scorePct >= 70 ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-500' : 'bg-red-50 dark:bg-red-950/30 text-red-500'}">
+                              <i class="fas ${scorePct >= 70 ? 'fa-trophy text-3xl' : 'fa-xmark text-3xl'}"></i>
+                          </div>
+                          
+                          <h2 class="text-2xl md:text-3xl font-black text-slate-800 dark:text-white mb-2">${t('score')}: ${score} / ${quizQuestions.length}</h2>
+                          <p class="text-lg font-extrabold text-primary-500 mb-8">${scorePct}%</p>
+                          
+                          <div class="flex flex-col sm:flex-row justify-center gap-3 w-full">
+                              <button onclick="startQuiz('${currentQuizType === 'mixed' ? 'exam' : currentQuizType}')" class="flex-1 px-6 py-4 bg-gradient-to-r from-primary-600 to-accent text-white rounded-2xl font-bold text-sm shadow-md shadow-primary-500/20 active:scale-95 transition-all">${t('retry')}</button>
+                              <button onclick="loadView('quizzes')" class="flex-1 px-6 py-4 bg-slate-50 dark:bg-gray-800 text-slate-700 dark:text-gray-200 border dark:border-gray-700 rounded-2xl font-bold text-sm hover:bg-slate-100 dark:hover:bg-gray-750 active:scale-95 transition-all">${currentLang === 'ar' ? 'قائمة الاختبارات' : 'Quizzes Menu'}</button>
+                          </div>
+                      </div>
+                  `;
+                  return;
+              }
+  
+              const q = quizQuestions[currentQIndex];
+              const progress = (currentQIndex / quizQuestions.length) * 100;
+              selectedAnswer = null;
+  
+              let questionHTML = '';
+              
+              // Multiple Choice (MCQ) Questions
+              if (currentQuizType === 'mcq') {
+                  const qText = currentLang === 'ar' ? q.q : q.eq;
+                  const opts = currentLang === 'ar' ? q.options : q.eoptions;
+                  
+                  questionHTML = `
+                      <div class="text-center mb-6">
+                          <span class="text-[10px] text-primary-500 font-extrabold bg-primary-50 dark:bg-indigo-950/45 px-3 py-1 rounded-full uppercase tracking-wider relative z-10">${currentLang === 'ar' ? 'اختيار من متعدد' : 'Multiple Choice'}</span>
+                      </div>
+                      <h3 class="text-lg md:text-xl font-bold mb-6 text-slate-850 dark:text-white leading-snug">${qText}</h3>
+                      <div class="grid grid-cols-1 gap-3.5" id="options-container">
+                          ${opts.map((opt, i) => `
+                              <button onclick="selectOptionMCQ(${i})" class="option-card w-full text-right rtl:text-right ltr:text-left p-4.5 rounded-2xl border border-gray-200 dark:border-gray-800 hover:border-primary-400 bg-slate-50 dark:bg-slate-900/60 font-semibold text-sm text-slate-800 dark:text-gray-200 flex items-center justify-between" id="opt-${i}">
+                                  <span>${opt}</span>
+                                  <div class="w-5 h-5 rounded-full border border-gray-300 dark:border-gray-650 flex items-center justify-center text-transparent text-[10px] shrink-0 font-bold ml-3 mr-3 indicator"><i class="fas fa-check"></i></div>
+                              </button>
+                          `).join('')}
+                      </div>
+                  `;
+              } 
+              // True or False (TF) Questions
+              else if (currentQuizType === 'tf') {
+                  const qText = currentLang === 'ar' ? q.q : q.eq;
+                  
+                  questionHTML = `
+                      <div class="text-center mb-6">
+                          <span class="text-[10px] text-emerald-500 font-extrabold bg-emerald-50 dark:bg-emerald-950/20 px-3 py-1 rounded-full uppercase tracking-wider relative z-10">${currentLang === 'ar' ? 'صح أم خطأ' : 'True or False'}</span>
+                      </div>
+                      <h3 class="text-lg md:text-xl font-bold mb-8 text-center text-slate-850 dark:text-white leading-snug">${qText}</h3>
+                      <div class="flex flex-col sm:flex-row justify-center gap-4" id="options-container">
+                          <button onclick="selectOptionTF(true)" class="option-card w-full sm:w-44 py-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-slate-900/60 text-base font-bold text-slate-800 dark:text-gray-250 flex items-center justify-center gap-2" id="opt-true">
+                              <i class="fas fa-check text-emerald-500"></i> 
+                              <span>${currentLang === 'ar' ? 'صح' : 'True'}</span>
+                          </button>
+                          <button onclick="selectOptionTF(false)" class="option-card w-full sm:w-44 py-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-slate-900/60 text-base font-bold text-slate-800 dark:text-gray-250 flex items-center justify-center gap-2" id="opt-false">
+                              <i class="fas fa-times text-red-500"></i> 
+                              <span>${currentLang === 'ar' ? 'خطأ' : 'False'}</span>
+                          </button>
+                      </div>
+                  `;
+              } 
+              // Fill in the Blanks
+              else if (currentQuizType === 'fill') {
+                  const qText = currentLang === 'ar' ? q.q : q.eq;
+                  
+                  questionHTML = `
+                      <div class="text-center mb-6">
+                          <span class="text-[10px] text-amber-500 font-extrabold bg-amber-50 dark:bg-amber-950/20 px-3 py-1 rounded-full uppercase tracking-wider relative z-10">${currentLang === 'ar' ? 'املأ الفراغ' : 'Fill in the Blank'}</span>
+                      </div>
+                      <h3 class="text-lg md:text-xl font-bold mb-6 text-slate-850 dark:text-white leading-relaxed text-center">${qText.replace('_____', '<span class="text-primary-650 dark:text-accent font-black underline px-2">_____</span>')}</h3>
+                      <div class="max-w-md mx-auto">
+                          <input type="text" id="fillInput" class="w-full p-4 rounded-2xl border border-gray-250 dark:border-gray-800 bg-slate-50 dark:bg-slate-900 text-base font-bold text-center focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all placeholder:text-gray-400" placeholder="${t('fill_blank_hint')}">
+                      </div>
+                      <div id="fillFeedback" class="mt-4 font-bold text-center p-3 rounded-2xl hidden"></div>
+                  `;
+              } 
+              // Tap to Match Quiz Interface (Tapping layout instead of ugly dropdown selects)
+              else if (currentQuizType === 'match') {
+                  const leftItems = currentLang === 'ar' ? q.ar_left : q.en_left;
+                  const rightItems = currentLang === 'ar' ? q.ar_right : q.en_right;
+                  
+                  // Shuffle right items, preserving their original index
+                  if (!q.shuffledRight) {
+                      q.shuffledRight = rightItems.map((val, idx) => ({ val, idx })).sort(() => 0.5 - Math.random());
+                  }
+  
+                  questionHTML = `
+                      <div class="text-center mb-6">
+                          <span class="text-[10px] text-purple-500 font-extrabold bg-purple-50 dark:bg-purple-950/20 px-3 py-1 rounded-full uppercase tracking-wider relative z-10">${currentLang === 'ar' ? 'مطابقة المفاهيم' : 'Tapping Match'}</span>
+                      </div>
+                      <h3 class="text-sm md:text-base font-bold mb-6 text-slate-700 dark:text-gray-300 text-center">${currentLang === 'ar' ? 'اضغط على المفهوم يميناً ثم التعريف المناسب له يساراً للمطابقة:' : 'Tap a concept on the right, then its definition on the left to match them:'}</h3>
+                      
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="match-workspace">
+                          <!-- Left Columns (Concepts) -->
+                          <div class="space-y-3">
+                              ${leftItems.map((lItem, i) => {
+                                  const isMatched = matchedPairs[i] !== undefined;
+                                  return `
+                                      <button onclick="handleMatchLeftClick(${i})" class="w-full text-right rtl:text-right ltr:text-left p-3.5 rounded-2xl border border-gray-150 dark:border-gray-800 text-xs font-bold transition-all flex justify-between items-center ${isMatched ? 'bg-emerald-50 dark:bg-emerald-950/25 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 cursor-default' : 'bg-slate-50 dark:bg-slate-900/60 text-slate-800 dark:text-gray-200 hover:border-primary-400'}" id="match-left-${i}" ${isMatched ? 'disabled' : ''}>
+                                          <span>${lItem}</span>
+                                          ${isMatched ? '<i class="fas fa-check-circle text-emerald-500 text-sm"></i>' : '<div class="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-750"></div>'}
+                                      </button>
+                                  `;
+                              }).join('')}
+                          </div>
+                          
+                          <!-- Right Columns (Definitions) -->
+                          <div class="space-y-3">
+                              ${q.shuffledRight.map(rItem => {
+                                  // Find if this right item is already matched
+                                  const isMatched = Object.values(matchedPairs).includes(rItem.idx);
+                                  return `
+                                      <button onclick="handleMatchRightClick(${rItem.idx})" class="w-full text-right rtl:text-right ltr:text-left p-3.5 rounded-2xl border border-gray-150 dark:border-gray-800 text-xs font-bold transition-all flex justify-between items-center ${isMatched ? 'bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-500/40 text-emerald-600 dark:text-emerald-450 cursor-default' : 'bg-slate-50 dark:bg-slate-900/60 text-slate-800 dark:text-gray-200 hover:border-accent'}" id="match-right-${rItem.idx}" ${isMatched ? 'disabled' : ''}>
+                                          <span>${rItem.val}</span>
+                                          ${isMatched ? '<i class="fas fa-check text-emerald-500"></i>' : '<div class="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-750"></div>'}
+                                      </button>
+                                  `;
+                              }).join('')}
+                          </div>
+                      </div>
+                      
+                      <div id="matchFeedback" class="mt-4 font-bold text-center p-3 rounded-2xl hidden"></div>
+                  `;
+              }
+  
+              container.innerHTML = `
+                  <div class="fade-in max-w-3xl mx-auto pt-4">
+                      <!-- Top stats bar -->
+                      <div class="flex justify-between items-center mb-4 text-xs font-extrabold text-gray-500">
+                          <span class="bg-white dark:bg-darkcard px-3.5 py-2 rounded-xl border border-gray-150 dark:border-gray-800 shadow-sm">${currentLang === 'ar' ? 'السؤال' : 'Question'} ${currentQIndex + 1} / ${quizQuestions.length}</span>
+                          <span class="bg-indigo-50 dark:bg-indigo-950/40 text-primary-650 dark:text-accent px-3.5 py-2 rounded-xl border border-indigo-100 dark:border-indigo-950 shadow-sm">${t('score')}: <span class="text-sm font-black">${score}</span></span>
+                      </div>
+                      
+                      <!-- Progress Bar -->
+                      <div class="w-full bg-gray-200 dark:bg-gray-850 rounded-full h-2 mb-6 overflow-hidden">
+                          <div class="bg-gradient-to-r from-primary-600 to-accent h-full transition-all duration-300" style="width: ${progress}%"></div>
+                      </div>
+                      
+                      <!-- Main Card -->
+                      <div class="bg-white dark:bg-darkcard p-6 md:p-10 rounded-3xl shadow-md border border-gray-150 dark:border-gray-800/80 mb-6 relative">
+                          ${questionHTML}
+                      </div>
+  
+                      <!-- Trigger Button -->
+                      <div class="text-center">
+                          <button id="checkBtn" data-action="check" onclick="evaluateAnswer()" class="px-10 py-4 bg-gradient-to-r from-primary-600 to-accent text-white rounded-2xl font-bold shadow-md shadow-primary-500/20 active:scale-95 transition-all text-base md:text-lg w-full sm:w-auto">
+                              ${currentQuizType === 'match' || currentQuizType === 'fill' ? t('check_answer') : (currentLang === 'ar' ? 'اختر إجابة' : 'Choose an answer')}
+                          </button>
+                      </div>
+                  </div>
+              `;
+              
+              // Disable check button initially for MCQ and True/False until selected
+              if (currentQuizType === 'mcq' || currentQuizType === 'tf') {
+                  const btn = document.getElementById('checkBtn');
+                  btn.disabled = true;
+                  btn.classList.add('opacity-45', 'cursor-not-allowed', 'from-gray-400', 'to-gray-500');
+                  btn.classList.remove('from-primary-600', 'to-accent', 'shadow-md');
+              }
+          }
+  
+          // --- Option Selector Helpers ---
+          window.selectOptionMCQ = (idx) => {
+              selectedAnswer = idx;
+              document.querySelectorAll('#options-container .option-card').forEach(card => {
+                  card.classList.remove('border-primary-500', 'bg-indigo-50/50', 'dark:bg-indigo-950/20');
+                  card.querySelector('.indicator').classList.remove('bg-primary-500', 'border-primary-500', 'text-white');
+                  card.querySelector('.indicator').classList.add('text-transparent');
+              });
+              
+              const selectedCard = document.getElementById(`opt-${idx}`);
+              selectedCard.classList.add('border-primary-500', 'bg-indigo-50/50', 'dark:bg-indigo-950/20');
+              selectedCard.querySelector('.indicator').classList.add('bg-primary-500', 'border-primary-500', 'text-white');
+              selectedCard.querySelector('.indicator').classList.remove('text-transparent');
+              
+              unlockCheckButton();
+          };
+  
+          window.selectOptionTF = (val) => {
+              selectedAnswer = val;
+              document.querySelectorAll('#options-container .option-card').forEach(card => {
+                  card.classList.remove('border-primary-500', 'bg-indigo-50/50', 'dark:bg-indigo-950/20');
+              });
+              
+              const targetId = val ? 'opt-true' : 'opt-false';
+              document.getElementById(targetId).classList.add('border-primary-500', 'bg-indigo-50/50', 'dark:bg-indigo-950/20');
+              
+              unlockCheckButton();
+          };
+  
+          function unlockCheckButton() {
+              const btn = document.getElementById('checkBtn');
+              btn.disabled = false;
+              btn.classList.remove('opacity-45', 'cursor-not-allowed', 'from-gray-400', 'to-gray-500');
+              btn.classList.add('from-primary-600', 'to-accent', 'shadow-md');
+              btn.innerText = t('check_answer');
+              btn.setAttribute('data-action', 'check');
+          }
+  
+          // --- MATCH QUIZ INTERACTION ---
+          window.handleMatchLeftClick = (idx) => {
+              // Deselect previous left if clicked again
+              if (matchSelectedLeftIdx === idx) {
+                  document.getElementById(`match-left-${idx}`).classList.remove('border-primary-500', 'bg-primary-50/40');
+                  matchSelectedLeftIdx = null;
+                  return;
+              }
+              
+              // Remove selection from previous left
+              if (matchSelectedLeftIdx !== null) {
+                  document.getElementById(`match-left-${matchSelectedLeftIdx}`).classList.remove('border-primary-500', 'bg-primary-50/40');
+              }
+              
+              matchSelectedLeftIdx = idx;
+              document.getElementById(`match-left-${idx}`).classList.add('border-primary-500', 'bg-primary-50/40');
+              
+              tryMatchItems();
+          };
+  
+          window.handleMatchRightClick = (idx) => {
+              // Deselect previous right if clicked again
+              if (matchSelectedRightIdx === idx) {
+                  document.getElementById(`match-right-${idx}`).classList.remove('border-accent', 'bg-purple-50/20');
+                  matchSelectedRightIdx = null;
+                  return;
+              }
+              
+              // Remove selection from previous right
+              if (matchSelectedRightIdx !== null) {
+                  document.getElementById(`match-right-${matchSelectedRightIdx}`).classList.remove('border-accent', 'bg-purple-50/20');
+              }
+              
+              matchSelectedRightIdx = idx;
+              document.getElementById(`match-right-${idx}`).classList.add('border-accent', 'bg-purple-50/20');
+              
+              tryMatchItems();
+          };
+  
+          function tryMatchItems() {
+              if (matchSelectedLeftIdx !== null && matchSelectedRightIdx !== null) {
+                  const q = quizQuestions[currentQIndex];
+                  
+                  // Check if match is correct
+                  if (q.pairs[matchSelectedLeftIdx] === matchSelectedRightIdx) {
+                      // Correct Match
+                      matchedPairs[matchSelectedLeftIdx] = matchSelectedRightIdx;
+                      
+                      const leftBtn = document.getElementById(`match-left-${matchSelectedLeftIdx}`);
+                      const rightBtn = document.getElementById(`match-right-${matchSelectedRightIdx}`);
+                      
+                      // Style both as correctly matched
+                      leftBtn.className = "w-full text-right rtl:text-right ltr:text-left p-3.5 rounded-2xl border border-emerald-500 bg-emerald-50 dark:bg-emerald-950/25 text-emerald-600 dark:text-emerald-450 font-bold transition-all flex justify-between items-center cursor-default";
+                      leftBtn.innerHTML = `<span>${q.ar_left[matchSelectedLeftIdx]}</span> <i class="fas fa-check-circle text-emerald-500"></i>`;
+                      leftBtn.disabled = true;
+                      
+                      const matchedVal = q.shuffledRight.find(item => item.idx === matchSelectedRightIdx).val;
+                      rightBtn.className = "w-full text-right rtl:text-right ltr:text-left p-3.5 rounded-2xl border border-emerald-500 bg-emerald-50 dark:bg-emerald-950/25 text-emerald-600 dark:text-emerald-450 font-bold transition-all flex justify-between items-center cursor-default";
+                      rightBtn.innerHTML = `<span>${matchedVal}</span> <i class="fas fa-check-circle text-emerald-500"></i>`;
+                      rightBtn.disabled = true;
+                  } else {
+                      // Incorrect Match - Flash red
+                      const leftBtn = document.getElementById(`match-left-${matchSelectedLeftIdx}`);
+                      const rightBtn = document.getElementById(`match-right-${matchSelectedRightIdx}`);
+                      
+                      leftBtn.classList.replace('border-primary-500', 'border-red-500');
+                      leftBtn.classList.add('bg-red-50', 'text-red-650');
+                      rightBtn.classList.replace('border-accent', 'border-red-500');
+                      rightBtn.classList.add('bg-red-50', 'text-red-650');
+                      
+                      setTimeout(() => {
+                          leftBtn.classList.remove('border-red-500', 'bg-red-50', 'text-red-650', 'bg-primary-50/40');
+                          leftBtn.classList.add('border-gray-150', 'dark:border-gray-800');
+                          rightBtn.classList.remove('border-red-500', 'bg-red-50', 'text-red-650', 'bg-purple-50/20');
+                          rightBtn.classList.add('border-gray-150', 'dark:border-gray-800');
+                      }, 800);
+                  }
+                  
+                  // Clear selections
+                  matchSelectedLeftIdx = null;
+                  matchSelectedRightIdx = null;
+                  
+                  // If all 5 matches are complete, enable check answers button
+                  const leftCount = currentLang === 'ar' ? q.ar_left.length : q.en_left.length;
+                  if (Object.keys(matchedPairs).length === leftCount) {
+                      unlockCheckButton();
+                  }
+              }
+          }
+  
+          // --- ANSWER EVALUATION ---
+          window.evaluateAnswer = () => {
+              const q = quizQuestions[currentQIndex];
+              const btn = document.getElementById('checkBtn');
+              
+              // Advance to next question if evaluated
+              if (btn.getAttribute('data-action') === 'next') {
+                  currentQIndex++;
+                  if (currentQuizType === 'mixed') {
+                      currentQuizType = quizQuestions[currentQIndex] ? quizQuestions[currentQIndex].type : 'mixed';
+                  }
+                  renderQuizInterface();
+                  return;
+              }
+  
+              let isCorrect = false;
+  
+              // MCQ Verification
+              if (currentQuizType === 'mcq') {
+                  const correctIdx = q.a;
+                  document.getElementById(`opt-${correctIdx}`).classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-700', 'dark:bg-emerald-950/20');
+                  document.getElementById(`opt-${correctIdx}`).querySelector('.indicator').className = "w-5 h-5 rounded-full bg-emerald-500 border border-emerald-500 flex items-center justify-center text-white text-[10px] shrink-0 font-bold ml-3 mr-3";
+                  
+                  if (selectedAnswer === correctIdx) {
+                      isCorrect = true;
+                  } else {
+                      document.getElementById(`opt-${selectedAnswer}`).classList.add('border-red-500', 'bg-red-50', 'text-red-700', 'dark:bg-red-950/10');
+                      document.getElementById(`opt-${selectedAnswer}`).querySelector('.indicator').className = "w-5 h-5 rounded-full bg-red-500 border border-red-500 flex items-center justify-center text-white text-[10px] shrink-0 font-bold ml-3 mr-3";
+                      document.getElementById(`opt-${selectedAnswer}`).querySelector('.indicator').innerHTML = '<i class="fas fa-times"></i>';
+                  }
+                  document.getElementById('options-container').style.pointerEvents = 'none';
+              } 
+              // TF Verification
+              else if (currentQuizType === 'tf') {
+                  const correctVal = q.a;
+                  const correctId = correctVal ? 'opt-true' : 'opt-false';
+                  document.getElementById(correctId).classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-700', 'dark:bg-emerald-950/20');
+                  
+                  if (selectedAnswer === correctVal) {
+                      isCorrect = true;
+                  } else {
+                      const selectedId = selectedAnswer ? 'opt-true' : 'opt-false';
+                      document.getElementById(selectedId).classList.add('border-red-500', 'bg-red-50', 'text-red-700', 'dark:bg-red-950/10');
+                  }
+                  document.getElementById('options-container').style.pointerEvents = 'none';
+              } 
+              // Fill in the Blanks Verification
+              else if (currentQuizType === 'fill') {
+                  const inputVal = document.getElementById('fillInput').value.trim().toLowerCase();
+                  const acceptedAnswers = currentLang === 'ar' ? q.a : q.ea;
+                  const feedback = document.getElementById('fillFeedback');
+                  feedback.classList.remove('hidden');
+                  
+                  if (acceptedAnswers.map(ans => ans.toLowerCase()).includes(inputVal)) {
+                      isCorrect = true;
+                      document.getElementById('fillInput').className = "w-full p-4 rounded-2xl border border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 text-base font-bold text-center text-emerald-600 focus:outline-none";
+                      feedback.innerHTML = `<i class="fas fa-check-circle"></i> ${t('correct')}`;
+                      feedback.className = "mt-4 font-bold text-center p-3 rounded-2xl text-emerald-600 bg-emerald-50 dark:bg-emerald-950/15";
+                  } else {
+                      document.getElementById('fillInput').className = "w-full p-4 rounded-2xl border border-red-500 bg-red-50 dark:bg-red-950/10 text-base font-bold text-center text-red-650 focus:outline-none";
+                      feedback.innerHTML = `<i class="fas fa-xmark-circle"></i> ${t('wrong')} <br> ${currentLang === 'ar' ? 'الإجابة الصحيحة:' : 'Correct answer:'} <span class="underline font-black">${acceptedAnswers[0]}</span>`;
+                      feedback.className = "mt-4 font-bold text-center p-3 rounded-2xl text-red-650 bg-red-50 dark:bg-red-950/15";
+                  }
+                  document.getElementById('fillInput').disabled = true;
+              } 
+              // Matching Verification (already verified on the fly, so we evaluate if everything succeeded)
+              else if (currentQuizType === 'match') {
+                  const leftCount = currentLang === 'ar' ? q.ar_left.length : q.en_left.length;
+                  if (Object.keys(matchedPairs).length === leftCount) {
+                      isCorrect = true;
+                  }
+              }
+  
+              if (isCorrect) {
+                  score++;
+              }
+              
+              btn.innerText = t('next');
+              btn.setAttribute('data-action', 'next');
+              btn.className = "px-10 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-2xl font-bold shadow-md shadow-emerald-500/20 active:scale-95 transition-all text-base md:text-lg w-full sm:w-auto";
+          };
+  
+          // --- 12. EXAM SIMULATOR ---
+          function renderExam(container) {
+              container.innerHTML = `
+                  <div class="fade-in max-w-2xl mx-auto py-6 md:py-10 text-center">
+                      <div class="bg-white dark:bg-darkcard p-8 md:p-12 rounded-3xl border border-gray-150 dark:border-gray-800 shadow-xl relative overflow-hidden">
+                          <div class="absolute -top-16 -right-16 w-36 h-36 bg-red-50 dark:bg-red-950/15 rounded-full filter blur-xl"></div>
+                          
+                          <div class="w-20 h-20 bg-red-50 dark:bg-red-950/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                              <i class="fas fa-file-signature text-3xl text-red-500"></i>
+                          </div>
+                          
+                          <h2 class="text-2xl md:text-3xl font-black text-slate-800 dark:text-white mb-3">${t('final_exam')}</h2>
+                          <p class="text-xs md:text-sm text-gray-400 font-semibold mb-6 max-w-sm mx-auto leading-relaxed">${t('exam_intro')}</p>
+                          
+                          <div class="bg-red-50/30 dark:bg-red-950/10 p-4.5 rounded-2xl border border-red-100/50 dark:border-red-900/20 mb-8 max-w-md mx-auto text-xs text-red-600 dark:text-red-400 font-medium">
+                              <i class="fas fa-info-circle mb-1 text-sm block"></i>
+                              <span>${t('exam_disclaimer')}</span>
+                          </div>
+                          
+                          <button onclick="startFinalExam()" class="px-10 py-4.5 bg-gradient-to-r from-red-500 to-red-650 text-white rounded-2xl font-extrabold text-base transition-all shadow-md shadow-red-500/20 active:scale-95 w-full sm:w-auto">
+                              ${currentLang === 'ar' ? 'ابدأ الامتحان النهائي' : 'Start Final Exam'}
+                          </button>
+                      </div>
+  
+                      <!-- Certificate Display (If unlocked previously) -->
+                      ${userProgress.examHighScore >= 75 ? `
+                          <div class="mt-8 bg-amber-50/20 dark:bg-amber-950/5 border border-amber-200/50 dark:border-amber-900/20 p-8 rounded-3xl shadow-sm text-center relative overflow-hidden" id="certificate-panel">
+                              <div class="absolute top-0 right-0 p-4 text-amber-500/25 text-8xl pointer-events-none"><i class="fas fa-certificate"></i></div>
+                              <span class="text-[9px] uppercase tracking-widest text-amber-600 dark:text-amber-400 font-extrabold bg-amber-100/60 dark:bg-amber-950/30 px-3 py-1 rounded-full">${t('cert_title')}</span>
+                              <p class="text-xs text-gray-400 mt-4 max-w-md mx-auto font-medium">${t('cert_desc')}</p>
+                              <h3 class="text-2xl font-black text-amber-600 mt-3">${userProgress.examHighScore}%</h3>
+                              <div class="text-[10px] text-gray-400 font-bold uppercase mt-8 border-t dark:border-gray-800 pt-4 flex justify-between items-center">
+                                  <span>${t('instructor')}</span>
+                                  <span>${t('congratulations')}</span>
+                              </div>
+                          </div>
+                      ` : `
+                          <p class="text-[10px] text-gray-400 font-bold mt-4"><i class="fas fa-lock rtl:ml-1 ltr:mr-1"></i> ${t('pass_exam_tip')}</p>
+                      `}
+                  </div>
+              `;
+          }
+  
+          function startFinalExam() {
+              // Mix MCQ and True/False questions
+              const mcqs = quizData.mcq.map(q => ({ ...q, type: 'mcq' }));
+              const tfs = quizData.tf.map(q => ({ ...q, type: 'tf' }));
+              
+              // Pool all, shuffle, select 20
+              quizQuestions = [...mcqs, ...tfs].sort(() => 0.5 - Math.random()).slice(0, 20);
+              currentQIndex = 0;
+              score = 0;
+              currentQuizType = 'mixed';
+              
+              renderMixedQuizInterface();
+          }
+  
+          function renderMixedQuizInterface() {
+              if (currentQIndex < quizQuestions.length) {
+                  currentQuizType = quizQuestions[currentQIndex].type;
+                  renderQuizInterface();
+              } else {
+                  // Exam complete
+                  const finalScorePct = Math.round((score / quizQuestions.length) * 100);
+                  userProgress.examHighScore = Math.max(userProgress.examHighScore || 0, finalScorePct);
+                  saveToStorage();
+                  
+                  if (finalScorePct >= 75) {
+                      triggerConfetti();
+                  }
+  
+                  // Render Exam Result
+                  const container = document.getElementById('content-container');
+                  container.innerHTML = `
+                      <div class="fade-in bg-white dark:bg-darkcard p-8 md:p-12 rounded-3xl shadow-xl text-center max-w-xl mx-auto border border-gray-150 dark:border-gray-800 relative overflow-hidden">
+                          <div class="absolute -top-16 -right-16 w-36 h-36 bg-amber-100/30 dark:bg-amber-950/15 rounded-full filter blur-xl"></div>
+                          
+                          <div class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-6 shadow-md ${finalScorePct >= 75 ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-500' : 'bg-red-50 dark:bg-red-950/30 text-red-500'}">
+                              <i class="fas ${finalScorePct >= 75 ? 'fa-award text-3xl' : 'fa-triangle-exclamation text-3xl'}"></i>
+                          </div>
+                          
+                          <h2 class="text-2xl md:text-3xl font-black text-slate-800 dark:text-white mb-2">${finalScorePct >= 75 ? t('congratulations') : (currentLang === 'ar' ? 'لم تجتز النسبة المطلوبة' : 'Score requirement not met')}</h2>
+                          <p class="text-3xl font-black text-amber-600 mt-2.5 mb-2">${finalScorePct}%</p>
+                          <p class="text-xs text-gray-400 mb-8 font-medium">${currentLang === 'ar' ? `لقد أجبت بشكل صحيح على ${score} من أصل 20 سؤالاً.` : `You answered ${score} out of 20 questions correctly.`}</p>
+                          
+                          <div class="flex flex-col sm:flex-row justify-center gap-3 w-full">
+                              <button onclick="startFinalExam()" class="flex-1 px-6 py-4 bg-gradient-to-r from-red-500 to-red-650 text-white rounded-2xl font-bold text-sm shadow-md active:scale-95 transition-all">${t('retry')}</button>
+                              <button onclick="loadView('exam')" class="flex-1 px-6 py-4 bg-slate-50 dark:bg-gray-800 text-slate-700 dark:text-gray-200 border dark:border-gray-700 rounded-2xl font-bold text-sm hover:bg-slate-100 dark:hover:bg-gray-750 active:scale-95 transition-all">${currentLang === 'ar' ? 'عرض النتائج والشهادة' : 'View Certificate'}</button>
+                          </div>
+                      </div>
+                  `;
+              }
+          }
+  
+          // --- 13. LIVE SEARCH FILTER ---
+          window.handleSearch = () => {
+              const query = document.getElementById('searchInput').value.toLowerCase().trim();
+              const resultsBox = document.getElementById('searchResults');
+              
+              if (query.length < 2) { 
+                  resultsBox.classList.add('hidden'); 
+                  return; 
+              }
+  
+              let resultsHTML = '';
+              
+              courseData.forEach(ch => {
+                  const textPool = ch[currentLang].content.toLowerCase() + ch[currentLang].title.toLowerCase() + ch[currentLang].overview.toLowerCase();
+                  
+                  if (textPool.includes(query)) {
+                      resultsHTML += `
+                          <div onclick="openSearchResult(${ch.id})" class="p-4 hover:bg-slate-50 dark:hover:bg-slate-900/80 cursor-pointer transition-colors flex items-center justify-between gap-4">
+                              <div>
+                                  <span class="text-[9px] text-primary-500 font-extrabold uppercase bg-primary-50 dark:bg-indigo-950/45 px-2 py-0.5 rounded-lg border border-primary-100/50"><i class="fas fa-book-open rtl:ml-1 ltr:mr-1"></i> ${currentLang === 'ar' ? 'فصل دراسي' : 'Chapter'}</span>
+                                  <h4 class="font-bold text-xs md:text-sm text-slate-850 dark:text-gray-250 mt-2">${ch[currentLang].title}</h4>
+                                  <p class="text-[10px] text-gray-450 mt-1 line-clamp-1">${ch[currentLang].overview}</p>
+                              </div>
+                              <i class="fas fa-chevron-right text-xs text-gray-300 rtl:rotate-180"></i>
+                          </div>
+                      `;
+                  }
+              });
+  
+              if (resultsHTML) {
+                  resultsBox.innerHTML = resultsHTML; 
+                  resultsBox.classList.remove('hidden');
+              } else {
+                  resultsBox.innerHTML = `
+                      <div class="p-6 text-center text-gray-400">
+                          <i class="fas fa-search-minus mb-2 text-2xl text-gray-300"></i>
+                          <p class="text-xs font-bold">${currentLang === 'ar' ? 'عذراً، لم نجد نتائج مطابقة' : 'No results found'}</p>
+                      </div>
+                  `;
+                  resultsBox.classList.remove('hidden');
+              }
+          };
+  
+          window.openSearchResult = (chapterId) => {
+              document.getElementById('searchInput').value = '';
+              document.getElementById('searchResults').classList.add('hidden');
+              renderChapter(chapterId);
+          };
+  
+          // Close search list when clicking outside
+          window.addEventListener('click', (e) => {
+              if (!e.target.closest('#searchInput') && !e.target.closest('#searchResults')) {
+                  document.getElementById('searchResults').classList.add('hidden');
+              }
+          });
+  
+          // --- 14. MULTI-MODE STUDY TIMER (POMODORO & NORMAL) ---
+          function runStudyTimer() {
+              if (timerInterval) clearInterval(timerInterval);
+              
+              document.getElementById('timerTypeDisplay').innerText = currentLang === 'ar' ? 'وضع الدراسة المفتوح' : 'Open Study Mode';
+              
+              timerInterval = setInterval(() => {
+                  timerSeconds++;
+                  updateTimerDisplay();
+                  // Save progress hourly
+                  if (timerSeconds % 60 === 0) {
+                      saveToStorage();
+                  }
+              }, 1000);
+          }
+  
+          function updateTimerDisplay() {
+              const display = document.getElementById('timerDisplay');
+              if (timerMode === 'normal') {
+                  const hrs = String(Math.floor(timerSeconds / 3600)).padStart(2, '0');
+                  const mins = String(Math.floor((timerSeconds % 3600) / 60)).padStart(2, '0');
+                  const secs = String(timerSeconds % 60).padStart(2, '0');
+                  display.innerText = hrs !== '00' ? `${hrs}:${mins}:${secs}` : `${mins}:${secs}`;
+              } else {
+                  const mins = String(Math.floor(pomodoroSecondsLeft / 60)).padStart(2, '0');
+                  const secs = String(pomodoroSecondsLeft % 60).padStart(2, '0');
+                  display.innerText = `${mins}:${secs}`;
+              }
+          }
+  
+          function switchTimerMode() {
+              if (timerInterval) {
+                  clearInterval(timerInterval);
+                  timerInterval = null;
+              }
+              
+              // Swap Mode
+              timerMode = timerMode === 'normal' ? 'pomodoro' : 'normal';
+              document.getElementById('timerIcon').className = "fas fa-play text-xs";
+              
+              if (timerMode === 'normal') {
+                  updateTimerDisplay();
+              } else {
+                  initPomodoro();
+              }
+              saveToStorage();
+          }
+  
+          function initPomodoro() {
+              pomodoroState = 'study';
+              pomodoroSecondsLeft = 25 * 60;
+              document.getElementById('timerTypeDisplay').innerText = t('pomodoro_study');
+              updateTimerDisplay();
+          }
+  
+          function toggleStudyTimer() {
+              const icon = document.getElementById('timerIcon');
+              
+              if (timerInterval) {
+                  // Pause Timer
+                  clearInterval(timerInterval);
+                  timerInterval = null;
+                  icon.className = "fas fa-play text-xs";
+              } else {
+                  // Start Timer
+                  icon.className = "fas fa-pause text-xs";
+                  
+                  if (timerMode === 'normal') {
+                      runStudyTimer();
+                  } else {
+                      runPomodoroTimer();
+                  }
+              }
+          }
+  
+          function runPomodoroTimer() {
+              if (timerInterval) clearInterval(timerInterval);
+              
+              timerInterval = setInterval(() => {
+                  if (pomodoroSecondsLeft > 0) {
+                      pomodoroSecondsLeft--;
+                      updateTimerDisplay();
+                      // Accumulate overall study time during study state
+                      if (pomodoroState === 'study') {
+                          timerSeconds++;
+                      }
+                  } else {
+                      // Pomodoro stage switch
+                      clearInterval(timerInterval);
+                      timerInterval = null;
+                      icon.className = "fas fa-play text-xs";
+                      
+                      if (pomodoroState === 'study') {
+                          pomodoroState = 'break';
+                          pomodoroSecondsLeft = 5 * 60;
+                          document.getElementById('timerTypeDisplay').innerText = t('pomodoro_break');
+                          alert(currentLang === 'ar' ? 'حان وقت الاستراحة! خذ نفساً عميقاً.' : 'Break time! Take a deep breath.');
+                      } else {
+                          pomodoroState = 'study';
+                          pomodoroSecondsLeft = 25 * 60;
+                          document.getElementById('timerTypeDisplay').innerText = t('pomodoro_study');
+                          alert(currentLang === 'ar' ? 'حان وقت التركيز! لنبدأ الدراسة.' : 'Focus time! Let\'s start studying.');
+                      }
+                      updateTimerDisplay();
+                  }
+              }, 1000);
+          }
+  
+          function resetStudyTimer() {
+              if (timerInterval) {
+                  clearInterval(timerInterval);
+                  timerInterval = null;
+              }
+              
+              document.getElementById('timerIcon').className = "fas fa-play text-xs";
+              
+              if (timerMode === 'normal') {
+                  timerSeconds = 0;
+                  updateTimerDisplay();
+              } else {
+                  initPomodoro();
+              }
+              saveToStorage();
+          }
+  
+          // --- 15. DRAGGING PORTABLE TIMER MODULE ---
+          function makeDraggable(el) {
+              let offsetXX = 0, offsetYY = 0, clickXX = 0, clickYY = 0;
+              
+              const dragStart = (e) => {
+                  if (e.target.closest('button')) return; // Avoid drag when clicking buttons inside widget
+                  
+                  const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                  const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                  
+                  clickXX = clientX;
+                  clickYY = clientY;
+                  
+                  document.addEventListener('mouseup', dragEnd);
+                  document.addEventListener('mousemove', dragMove);
+                  document.addEventListener('touchend', dragEnd);
+                  document.addEventListener('touchmove', dragMove, { passive: false });
+              };
+  
+              const dragMove = (e) => {
+                  e.preventDefault();
+                  
+                  const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                  const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                  
+                  offsetXX = clickXX - clientX;
+                  offsetYY = clickYY - clientY;
+                  clickXX = clientX;
+                  clickYY = clientY;
+                  
+                  // Calculate new position
+                  let newTop = el.offsetTop - offsetYY;
+                  let newLeft = el.offsetLeft - offsetXX;
+                  
+                  // Boundaries check
+                  const maxTop = window.innerHeight - el.offsetHeight;
+                  const maxLeft = window.innerWidth - el.offsetWidth;
+                  
+                  newTop = Math.max(0, Math.min(newTop, maxTop));
+                  newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                  
+                  el.style.top = newTop + "px";
+                  el.style.left = newLeft + "px";
+                  el.style.bottom = 'auto';
+                  el.style.right = 'auto';
+              };
+  
+              const dragEnd = () => {
+                  document.removeEventListener('mouseup', dragEnd);
+                  document.removeEventListener('mousemove', dragMove);
+                  document.removeEventListener('touchend', dragEnd);
+                  document.removeEventListener('touchmove', dragMove);
+              };
+  
+              el.addEventListener('mousedown', dragStart);
+              el.addEventListener('touchstart', dragStart, { passive: true });
+          }
+  
+          // --- 16. CONFETTI CELEBRATION EFFECT ---
+          function triggerConfetti() {
+              const colors = ['#6366f1', '#8b5cf6', '#22c55e', '#ec4899', '#eab308'];
+              const container = document.getElementById('confetti-container');
+              
+              for (let i = 0; i < 70; i++) {
+                  const conf = document.createElement('div');
+                  conf.className = 'confetti';
+                  conf.style.left = Math.random() * 100 + 'vw';
+                  conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                  conf.style.animationDelay = Math.random() * 2 + 's';
+                  conf.style.transform = `scale(${Math.random() * 0.8 + 0.4})`;
+                  container.appendChild(conf);
+              }
+              
+              // Cleanup
+              setTimeout(() => {
+                  container.innerHTML = '';
+              }, 6000);
+          }
+  
+          // Bootstrap on load
+          window.addEventListener('DOMContentLoaded', initApp);
+      </script>
+  </body>
+  </html>
